@@ -699,26 +699,26 @@
                 <div class="glass-card kpi-card">
                     <i class="fas fa-exclamation-triangle"></i>
                     <div class="kpi-value" id="kpiPredictedFaults">0</div>
-                    <div class="kpi-label">Predicted Faults</div>
+                    <div class="kpi-label">Predicted Faults (System Output=1)</div>
                 </div>
                 <div class="glass-card kpi-card">
-                    <i class="fas fa-circle"></i>
-                    <div class="kpi-value" id="kpiCritical" style="color: #ef4444;">0</div>
-                    <div class="kpi-label">Critical</div>
+                    <i class="fas fa-bolt"></i>
+                    <div class="kpi-value" id="kpiActualFaults" style="color: #ef4444;">0</div>
+                    <div class="kpi-label">Actual Faults (Final Fault=1)</div>
                 </div>
                 <div class="glass-card kpi-card">
-                    <i class="fas fa-circle"></i>
-                    <div class="kpi-value" id="kpiMarginal" style="color: #f59e0b;">0</div>
-                    <div class="kpi-label">Marginal</div>
+                    <i class="fas fa-check-circle"></i>
+                    <div class="kpi-value" id="kpiCorrectPredictions" style="color: #10b981;">0</div>
+                    <div class="kpi-label">Correct Predictions</div>
                 </div>
                 <div class="glass-card kpi-card">
-                    <i class="fas fa-circle"></i>
-                    <div class="kpi-value" id="kpiGood" style="color: #666666;">0</div>
-                    <div class="kpi-label">Good</div>
+                    <i class="fas fa-times-circle"></i>
+                    <div class="kpi-value" id="kpiIncorrectPredictions" style="color: #f59e0b;">0</div>
+                    <div class="kpi-label">Incorrect Predictions</div>
                 </div>
                 <div class="glass-card kpi-card">
                     <i class="fas fa-list-check"></i>
-                    <div class="kpi-value" id="kpiActiveRules">0</div>
+                    <div class="kpi-value" id="kpiActiveRules">7</div>
                     <div class="kpi-label">Active Rules</div>
                 </div>
             </div>
@@ -734,13 +734,13 @@
             <div class="row mt-4">
                 <div class="col-lg-6">
                     <div class="glass-card chart-container">
-                        <div class="chart-title">Power Level Distribution</div>
+                        <div class="chart-title">Prediction Confusion Matrix</div>
                         <canvas id="powerDistributionChart"></canvas>
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="glass-card chart-container">
-                        <div class="chart-title">Weekly Fault Prediction</div>
+                        <div class="chart-title">Prediction Summary</div>
                         <canvas id="weeklyChart"></canvas>
                     </div>
                 </div>
@@ -794,31 +794,21 @@
             </div>
 
             <div class="glass-card">
-                <h5 style="color: inherit; margin-bottom: 20px;">Power Level Summary</h5>
-                <div class="row">
-                    <div class="col-md-4 text-center" style="padding: 20px;">
-                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Critical (&lt;= -32 dBm)</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #ef4444;" id="analyticsCritical">0</div>
-                    </div>
-                    <div class="col-md-4 text-center" style="padding: 20px;">
-                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Marginal (-32 to -27 dBm)</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #f59e0b;" id="analyticsMarginal">0</div>
-                    </div>
-                    <div class="col-md-4 text-center" style="padding: 20px;">
-                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Good (-8 to 0 dBm)</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #666666;" id="analyticsGood">0</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-card mt-4">
                 <h5 style="color: inherit; margin-bottom: 20px;">Fault Prediction Summary</h5>
                 <div class="row">
-                    <div class="col-md-6 text-center" style="padding: 20px;">
-                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Total Faults Predicted</div>
-                        <div style="font-size: 32px; font-weight: bold; color: #ef4444;" id="analyticsFaults">0</div>
+                    <div class="col-md-3 text-center" style="padding: 20px;">
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Predicted Faults</div>
+                        <div style="font-size: 32px; font-weight: bold; color: #f59e0b;" id="analyticsPredicted">0</div>
                     </div>
-                    <div class="col-md-6 text-center" style="padding: 20px;">
+                    <div class="col-md-3 text-center" style="padding: 20px;">
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Actual Faults</div>
+                        <div style="font-size: 32px; font-weight: bold; color: #ef4444;" id="analyticsActual">0</div>
+                    </div>
+                    <div class="col-md-3 text-center" style="padding: 20px;">
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Correct Predictions</div>
+                        <div style="font-size: 32px; font-weight: bold; color: #10b981;" id="analyticsCorrect">0</div>
+                    </div>
+                    <div class="col-md-3 text-center" style="padding: 20px;">
                         <div style="font-size: 14px; opacity: 0.8; margin-bottom: 10px;">Fault Rate (%)</div>
                         <div style="font-size: 32px; font-weight: bold; color: #999999;" id="analyticsFaultRate">0%</div>
                     </div>
@@ -838,16 +828,16 @@
                 <table id="dataTable" class="table table-hover" style="width: 100%;">
                     <thead>
                         <tr>
+                            <th>PPP Username</th>
                             <th>Date</th>
-                            <th>RX Power (dBm)</th>
-                            <th>Power Status</th>
                             <th>Rule Results</th>
-                            <th>System Output</th>
-                            <th>1 Week Fault</th>
-                            <th>2 Week Fault</th>
-                            <th>3 Week Fault</th>
-                            <th>4 Week Fault</th>
-                            <th>Final Result</th>
+                            <th>Final System Output</th>
+                            <th>Same Day Fault</th>
+                            <th>1st Week Fault</th>
+                            <th>2nd Week Fault</th>
+                            <th>3rd Week Fault</th>
+                            <th>4th Week Fault</th>
+                            <th>Final Fault Result</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -861,73 +851,129 @@
              ============================================ -->
         <section id="validation" class="section-content" style="display: none;">
             <div class="section-title">
-                <i class="fas fa-check-circle"></i> Model Validation & Accuracy Metrics
+                <i class="fas fa-check-circle"></i> Model Validation &amp; Confusion Matrix
             </div>
 
-            <!-- Validation File Upload -->
+            <!-- Confusion Matrix Legend -->
             <div class="glass-card" style="margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                    <label for="validationFile" class="btn btn-primary" style="cursor: pointer; margin: 0;">
-                        <i class="fas fa-upload"></i> Upload output.csv
-                    </label>
-                    <input type="file" id="validationFile" accept=".csv" style="display: none;">
-                    <span id="validationFileName" style="font-size: 13px; opacity: 0.8;">No validation file loaded</span>
-                    <button class="btn btn-danger" id="clearValidationBtn" style="margin: 0;" title="Clear Validation Data">
-                        <i class="fas fa-trash-alt"></i> Clear File
-                    </button>
-                </div>
-            </div>
-
-            <!-- Validation Data Table with Filters -->
-            <div class="glass-card">
-                <div style="margin-bottom: 15px;">
-                    <h3 style="color: #d0d0d0; margin-bottom: 15px;">Validation Results</h3>
-                    
-                    <!-- Filter Controls -->
-                    <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; align-items: center;">
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 12px; opacity: 0.7; display: block; margin-bottom: 5px;">Filter by Prediction:</label>
-                            <select id="predictionFilter" style="width: 100%; padding: 8px 12px; background: #2d3748; border: 1px solid #4a5568; color: #e0e0e0; border-radius: 6px; font-size: 13px;">
-                                <option value="all">All Predictions</option>
-                                <option value="1">Fault Predicted (1)</option>
-                                <option value="0">No Fault Predicted (0)</option>
-                            </select>
-                        </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 12px; opacity: 0.7; display: block; margin-bottom: 5px;">Filter by Actual Result:</label>
-                            <select id="actualFilter" style="width: 100%; padding: 8px 12px; background: #2d3748; border: 1px solid #4a5568; color: #e0e0e0; border-radius: 6px; font-size: 13px;">
-                                <option value="all">All Results</option>
-                                <option value="1">Fault Occurred (1)</option>
-                                <option value="0">No Fault (0)</option>
-                            </select>
-                        </div>
-                        <div style="flex: 1; min-width: 200px;">
-                            <label style="font-size: 12px; opacity: 0.7; display: block; margin-bottom: 5px;">Filter by Accuracy:</label>
-                            <select id="accuracyTypeFilter" style="width: 100%; padding: 8px 12px; background: #2d3748; border: 1px solid #4a5568; color: #e0e0e0; border-radius: 6px; font-size: 13px;">
-                                <option value="all">All Records</option>
-                                <option value="correct">Correct Predictions</option>
-                                <option value="incorrect">Incorrect Predictions</option>
-                            </select>
-                        </div>
+                <h5 style="color: #d0d0d0; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> Confusion Matrix Logic</h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-weight: 700; color: #10b981; font-size: 16px;">TP (True Positive)</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Predicted = <strong>1</strong>, Actual = <strong>1</strong></div>
+                    </div>
+                    <div style="background: rgba(156, 163, 175, 0.15); border: 1px solid rgba(156, 163, 175, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-weight: 700; color: #9ca3af; font-size: 16px;">TN (True Negative)</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Predicted = <strong>0</strong>, Actual = <strong>0</strong></div>
+                    </div>
+                    <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-weight: 700; color: #ef4444; font-size: 16px;">FP (False Positive)</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Predicted = <strong>1</strong>, Actual = <strong>0</strong></div>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-weight: 700; color: #f59e0b; font-size: 16px;">FN (False Negative)</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Predicted = <strong>0</strong>, Actual = <strong>1</strong></div>
                     </div>
                 </div>
+            </div>
 
-                <table id="validationTable" class="table table-hover" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Predicted Output</th>
-                            <th>Actual Result</th>
-                            <th>True Positives</th>
-                            <th>True Negatives</th>
-                            <th>False Positives</th>
-                            <th>False Negatives</th>
-                            <th>Daily Accuracy</th>
-                        </tr>
-                    </thead>
-                    <tbody id="validationTableBody">
-                    </tbody>
-                </table>
+            <!-- Overall Metrics Summary -->
+            <div class="glass-card" style="margin-bottom: 20px;" id="overallMetricsCard">
+                <h5 style="color: #d0d0d0; margin-bottom: 15px;"><i class="fas fa-chart-pie"></i> Overall Metrics</h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #10b981;" id="metricAccuracy">-</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Accuracy</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #3b82f6;" id="metricPrecision">-</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Precision</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #8b5cf6;" id="metricRecall">-</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Recall</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #ec4899;" id="metricF1">-</div>
+                        <div style="font-size: 12px; opacity: 0.7;">F1 Score</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #10b981;" id="metricTotalTP">0</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Total TP</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #9ca3af;" id="metricTotalTN">0</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Total TN</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #ef4444;" id="metricTotalFP">0</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Total FP</div>
+                    </div>
+                    <div style="text-align: center; padding: 10px;">
+                        <div style="font-size: 28px; font-weight: 700; color: #f59e0b;" id="metricTotalFN">0</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Total FN</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Aggregated Confusion Matrix Table -->
+            <div class="glass-card" style="margin-bottom: 20px;">
+                <h5 style="color: #d0d0d0; margin-bottom: 15px;"><i class="fas fa-calendar-alt"></i> Daily Confusion Matrix Summary</h5>
+                <p style="font-size: 13px; opacity: 0.6; margin-bottom: 15px;">Click on a date row to see individual user details for that day.</p>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover" style="width: 100%;" id="dailySummaryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th style="color: #10b981;">TP</th>
+                                <th style="color: #9ca3af;">TN</th>
+                                <th style="color: #ef4444;">FP</th>
+                                <th style="color: #f59e0b;">FN</th>
+                                <th>Total Users</th>
+                                <th>Accuracy %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailySummaryBody">
+                            <tr><td colspan="7" style="text-align:center; opacity:0.6; padding:20px;">Upload a CSV file to see daily confusion matrix.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- User Drilldown Panel (hidden by default) -->
+            <div class="glass-card" id="userDrilldownPanel" style="display: none; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h5 style="color: #d0d0d0; margin: 0;">
+                        <i class="fas fa-users"></i> Users for <span id="drilldownDate" style="color: #f59e0b;"></span>
+                        <span id="drilldownCount" style="font-size: 13px; opacity: 0.6; margin-left: 10px;"></span>
+                    </h5>
+                    <button class="btn btn-secondary btn-sm" id="closeDrilldownBtn" style="border-radius: 8px;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+                <p style="font-size: 12px; opacity: 0.5; margin-bottom: 15px;">Sorted by rule relevance (most rules triggered first)</p>
+                <div style="overflow-x: auto;">
+                    <table class="table table-hover" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>PPP Username</th>
+                                <th>R1<br><span style="font-size:9px;font-weight:400;">Sensor</span></th>
+                                <th>R2<br><span style="font-size:9px;font-weight:400;">Critical</span></th>
+                                <th>R3<br><span style="font-size:9px;font-weight:400;">Degrading</span></th>
+                                <th>R4<br><span style="font-size:9px;font-weight:400;">SuddenDrop</span></th>
+                                <th>R5<br><span style="font-size:9px;font-weight:400;">RX Instab.</span></th>
+                                <th>R6<br><span style="font-size:9px;font-weight:400;">LowSignal</span></th>
+                                <th>R7<br><span style="font-size:9px;font-weight:400;">FreqFault</span></th>
+                                <th>Rules<br>Triggered</th>
+                                <th>Predicted</th>
+                                <th>Actual</th>
+                                <th>Classification</th>
+                            </tr>
+                        </thead>
+                        <tbody id="drilldownBody">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -991,12 +1037,20 @@
             data: [],
             charts: {},
             dataTable: null,
-            defaultRules: [],  // Will be populated dynamically from CSV headers
+            defaultRules: [
+                { id: 'rule1', name: 'Rule1_SensorError', condition: 'Sensor Error Detection', description: 'Detects sensor error conditions', enabled: true, custom: false },
+                { id: 'rule2', name: 'Rule2_Critical', condition: 'Critical Condition', description: 'Detects critical fault conditions', enabled: true, custom: false },
+                { id: 'rule3', name: 'Rule3_Degrading', condition: 'Degrading Signal', description: 'Detects degrading signal quality', enabled: true, custom: false },
+                { id: 'rule4', name: 'Rule4_SuddenDrop', condition: 'Sudden Drop Detection', description: 'Detects sudden signal drops', enabled: true, custom: false },
+                { id: 'rule5', name: 'Rule5_RX_Instability', condition: 'RX Instability', description: 'Detects RX power instability', enabled: true, custom: false },
+                { id: 'rule6', name: 'Rule6_PersistentLowSignal', condition: 'Persistent Low Signal', description: 'Detects persistently low signal levels', enabled: true, custom: false },
+                { id: 'rule7', name: 'Rule7_FrequentFault', condition: 'Frequent Fault', description: 'Detects frequent fault occurrences', enabled: true, custom: false }
+            ],
             customRules: [],
             maxCustomRules: 15,
             validationData: [],
             validationMetrics: {},
-            csvHeaders: []  // Store headers from CSV
+            csvHeaders: []
         };
 
         // ============================================
@@ -1013,16 +1067,15 @@
                 // Clear KPIs
                 document.getElementById('kpiTotalRecords').textContent = '0';
                 document.getElementById('kpiPredictedFaults').textContent = '0';
-                document.getElementById('kpiCritical').textContent = '0';
-                document.getElementById('kpiMarginal').textContent = '0';
-                document.getElementById('kpiGood').textContent = '0';
-                document.getElementById('kpiActiveRules').textContent = String(APP.defaultRules.length);
+                document.getElementById('kpiActualFaults').textContent = '0';
+                document.getElementById('kpiCorrectPredictions').textContent = '0';
+                document.getElementById('kpiIncorrectPredictions').textContent = '0';
+                document.getElementById('kpiActiveRules').textContent = String(APP.defaultRules.filter(r => r.enabled).length);
                 
                 // Clear analytics
-                document.getElementById('analyticsCritical').textContent = '0';
-                document.getElementById('analyticsMarginal').textContent = '0';
-                document.getElementById('analyticsGood').textContent = '0';
-                document.getElementById('analyticsFaults').textContent = '0';
+                document.getElementById('analyticsPredicted').textContent = '0';
+                document.getElementById('analyticsActual').textContent = '0';
+                document.getElementById('analyticsCorrect').textContent = '0';
                 document.getElementById('analyticsFaultRate').textContent = '0%';
                 
                 // Clear table
@@ -1112,60 +1165,101 @@
 
         function parseCSV(csv) {
             const lines = csv.trim().split('\n');
-            const headerLine = lines[0].split(',').map(h => h.trim());
+            const headerLine = lines[0].split(',').map(h => h.trim().replace(/\r/, ''));
             
             // Store original headers
             APP.csvHeaders = headerLine;
             
-            // Find column indices
-            const dateIndex = headerLine.findIndex(h => h.toLowerCase().includes('date'));
-            const usernameIndex = headerLine.findIndex(h => h.toLowerCase().includes('username') || h.toLowerCase().includes('phone'));
-            const systemOutputIndex = headerLine.findIndex(h => h.toLowerCase().includes('final system output'));
-            const faultResultIndex = headerLine.findIndex(h => h.toLowerCase().includes('final fault result'));
+            // Find column indices by exact name
+            const usernameIndex = headerLine.indexOf('PPP_USERNAME_masked_masked');
+            const dateIndex = headerLine.indexOf('INSERTED_DATE');
+            const rule1Index = headerLine.indexOf('Rule1_SensorError');
+            const rule2Index = headerLine.indexOf('Rule2_Critical');
+            const rule3Index = headerLine.indexOf('Rule3_Degrading');
+            const rule4Index = headerLine.indexOf('Rule4_SuddenDrop');
+            const rule5Index = headerLine.indexOf('Rule5_RX_Instability');
+            const rule6Index = headerLine.indexOf('Rule6_PersistentLowSignal');
+            const rule7Index = headerLine.indexOf('Rule7_FrequentFault');
+            const systemOutputIndex = headerLine.indexOf('Final System Output');
+            const sameDayIndex = headerLine.indexOf('Same Day Fault');
+            const week1Index = headerLine.indexOf('1st Week Fault');
+            const week2Index = headerLine.indexOf('2nd Week fault');
+            const week3Index = headerLine.indexOf('3rd week fault');
+            const week4Index = headerLine.indexOf('4th week fault');
+            const faultResultIndex = headerLine.indexOf('Final Fault Result');
+            // TP/TN/FP/FN columns (present in sample_100)
+            const tpIndex = headerLine.indexOf('TP');
+            const tnIndex = headerLine.indexOf('TN');
+            const fpIndex = headerLine.indexOf('FP');
+            const fnIndex = headerLine.indexOf('FN');
             
-            // Extract rule columns (those starting with "Rule")
-            const ruleIndices = headerLine
-                .map((h, idx) => ({ header: h, idx: idx }))
-                .filter(item => item.header.toLowerCase().startsWith('rule'));
-            
-            // Create dynamic rules from CSV headers
-            APP.defaultRules = ruleIndices.map((rule, idx) => ({
-                id: `rule${idx + 1}`,
-                name: rule.header,
-                condition: rule.header,
-                description: `Automatically detected from CSV: ${rule.header}`,
-                enabled: true,
-                custom: false,
-                columnIndex: rule.idx
-            }));
+            const ruleIndices = [
+                { name: 'Rule1_SensorError', idx: rule1Index },
+                { name: 'Rule2_Critical', idx: rule2Index },
+                { name: 'Rule3_Degrading', idx: rule3Index },
+                { name: 'Rule4_SuddenDrop', idx: rule4Index },
+                { name: 'Rule5_RX_Instability', idx: rule5Index },
+                { name: 'Rule6_PersistentLowSignal', idx: rule6Index },
+                { name: 'Rule7_FrequentFault', idx: rule7Index }
+            ].filter(r => r.idx >= 0);
             
             // Parse data
             APP.data = [];
+            APP.validationData = [];
             for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(v => v.trim());
-                if (values.length > 0 && values[0]) {
+                const values = lines[i].split(',').map(v => v.trim().replace(/\r/, ''));
+                if (values.length > 1 && values[0]) {
                     const row = {
-                        date: dateIndex >= 0 ? values[dateIndex] : '',
                         username: usernameIndex >= 0 ? values[usernameIndex] : `Record${i}`,
+                        date: dateIndex >= 0 ? values[dateIndex] : '',
                         ruleResults: [],
-                        systemOutput: systemOutputIndex >= 0 ? parseInt(values[systemOutputIndex]) : 0,
-                        finalFault: faultResultIndex >= 0 ? parseInt(values[faultResultIndex]) : 0
+                        systemOutput: systemOutputIndex >= 0 ? parseInt(values[systemOutputIndex]) || 0 : 0,
+                        sameDayFault: sameDayIndex >= 0 ? parseInt(values[sameDayIndex]) || 0 : 0,
+                        week1Fault: week1Index >= 0 ? parseInt(values[week1Index]) || 0 : 0,
+                        week2Fault: week2Index >= 0 ? parseInt(values[week2Index]) || 0 : 0,
+                        week3Fault: week3Index >= 0 ? parseInt(values[week3Index]) || 0 : 0,
+                        week4Fault: week4Index >= 0 ? parseInt(values[week4Index]) || 0 : 0,
+                        finalFault: faultResultIndex >= 0 ? parseInt(values[faultResultIndex]) || 0 : 0,
+                        tp: tpIndex >= 0 ? parseInt(values[tpIndex]) || 0 : 0,
+                        tn: tnIndex >= 0 ? parseInt(values[tnIndex]) || 0 : 0,
+                        fp: fpIndex >= 0 ? parseInt(values[fpIndex]) || 0 : 0,
+                        fn: fnIndex >= 0 ? parseInt(values[fnIndex]) || 0 : 0
                     };
                     
                     // Extract rule values
                     ruleIndices.forEach(rule => {
                         row.ruleResults.push({
-                            name: rule.header,
+                            name: rule.name,
                             value: parseInt(values[rule.idx]) || 0
                         });
                     });
                     
                     APP.data.push(row);
+                    
+                    // If TP/TN/FP/FN columns exist, also add to validation data
+                    if (tpIndex >= 0) {
+                        APP.validationData.push({
+                            username: row.username,
+                            date: row.date,
+                            predicted: row.systemOutput,
+                            actual: row.finalFault,
+                            tp: row.tp,
+                            tn: row.tn,
+                            fp: row.fp,
+                            fn: row.fn
+                        });
+                    }
                 }
             }
             
             // Update KPI for active rules
-            document.getElementById('kpiActiveRules').textContent = String(APP.defaultRules.length);
+            document.getElementById('kpiActiveRules').textContent = String(APP.defaultRules.filter(r => r.enabled).length);
+            
+            // If validation data was found in CSV, update validation section
+            if (APP.validationData.length > 0) {
+                calculateValidationMetrics();
+                updateValidationTable();
+            }
             
             processData();
         }
@@ -1179,169 +1273,165 @@
         }
 
         // ============================================
-        // VALIDATION FILE HANDLING
+        // DAILY CONFUSION MATRIX & DRILLDOWN
         // ============================================
-        const validationFile = document.getElementById('validationFile');
-        validationFile.addEventListener('change', handleValidationFileUpload);
 
-        document.getElementById('clearValidationBtn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to clear the validation data?')) {
-                APP.validationData = [];
-                APP.validationMetrics = {};
-                validationFile.value = '';
-                document.getElementById('validationFileName').textContent = 'No validation file loaded';
-                document.getElementById('validationTableBody').innerHTML = '';
-            }
+        // Close drilldown panel
+        document.getElementById('closeDrilldownBtn').addEventListener('click', function() {
+            document.getElementById('userDrilldownPanel').style.display = 'none';
         });
 
-        function handleValidationFileUpload() {
-            const file = validationFile.files[0];
-            if (!file) return;
-
-            document.getElementById('validationFileName').textContent = `Loaded: ${file.name}`;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const csv = e.target.result;
-                parseValidationCSV(csv);
-                calculateValidationMetrics();
-                updateValidationTable();
-                
-                // Attach filter listeners
-                document.getElementById('predictionFilter').addEventListener('change', updateValidationTable);
-                document.getElementById('actualFilter').addEventListener('change', updateValidationTable);
-                document.getElementById('accuracyTypeFilter').addEventListener('change', updateValidationTable);
-            };
-            reader.readAsText(file);
+        // Classify a single row using confusion matrix logic
+        function classifyRow(row) {
+            const predicted = row.systemOutput;
+            const actual = row.finalFault;
+            if (predicted === 1 && actual === 1) return 'TP';
+            if (predicted === 0 && actual === 0) return 'TN';
+            if (predicted === 1 && actual === 0) return 'FP';
+            if (predicted === 0 && actual === 1) return 'FN';
+            return 'TN'; // fallback
         }
 
-        function parseValidationCSV(csv) {
-            const lines = csv.trim().split('\n');
-            const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        // Build daily aggregated confusion matrix from APP.data
+        function buildDailyConfusionMatrix() {
+            if (APP.data.length === 0) return;
 
-            const dateIdx = headers.findIndex(h => h.includes('date'));
-            const predIdx = headers.findIndex(h => h.includes('predicted'));
-            const actualIdx = headers.findIndex(h => h.includes('actual'));
-            const tpIdx = headers.findIndex(h => h.includes('true_pos'));
-            const tnIdx = headers.findIndex(h => h.includes('true_neg'));
-            const fpIdx = headers.findIndex(h => h.includes('false_pos'));
-            const fnIdx = headers.findIndex(h => h.includes('false_neg'));
-
-            APP.validationData = [];
-            for (let i = 1; i < lines.length; i++) {
-                const values = lines[i].split(',').map(v => v.trim());
-                if (values.length > 0 && values[0]) {
-                    APP.validationData.push({
-                        date: values[dateIdx] || '',
-                        predicted: parseInt(values[predIdx]) || 0,
-                        actual: parseInt(values[actualIdx]) || 0,
-                        tp: parseInt(values[tpIdx]) || 0,
-                        tn: parseInt(values[tnIdx]) || 0,
-                        fp: parseInt(values[fpIdx]) || 0,
-                        fn: parseInt(values[fnIdx]) || 0
-                    });
+            // Group data by date
+            const dateMap = {};
+            APP.data.forEach(row => {
+                if (!dateMap[row.date]) {
+                    dateMap[row.date] = { tp: 0, tn: 0, fp: 0, fn: 0, total: 0, rows: [] };
                 }
-            }
-        }
+                const cls = classifyRow(row);
+                dateMap[row.date][cls.toLowerCase()]++;
+                dateMap[row.date].total++;
+                dateMap[row.date].rows.push(row);
+            });
 
-        function calculateValidationMetrics() {
+            // Sort dates chronologically
+            const sortedDates = Object.keys(dateMap).sort((a, b) => new Date(a) - new Date(b));
+
+            // Calculate overall totals
             let totalTP = 0, totalTN = 0, totalFP = 0, totalFN = 0;
-
-            APP.validationData.forEach(row => {
-                totalTP += row.tp;
-                totalTN += row.tn;
-                totalFP += row.fp;
-                totalFN += row.fn;
+            sortedDates.forEach(date => {
+                totalTP += dateMap[date].tp;
+                totalTN += dateMap[date].tn;
+                totalFP += dateMap[date].fp;
+                totalFN += dateMap[date].fn;
             });
 
             const total = totalTP + totalTN + totalFP + totalFN;
             const accuracy = total > 0 ? ((totalTP + totalTN) / total) * 100 : 0;
             const precision = (totalTP + totalFP) > 0 ? (totalTP / (totalTP + totalFP)) * 100 : 0;
             const recall = (totalTP + totalFN) > 0 ? (totalTP / (totalTP + totalFN)) * 100 : 0;
-            const f1 = (precision + recall) > 0 ? 2 * (precision * recall) / (precision + recall) / 100 : 0;
+            const f1 = (precision + recall) > 0 ? (2 * precision * recall) / (precision + recall) : 0;
 
-            APP.validationMetrics = {
-                accuracy: accuracy.toFixed(2),
-                precision: precision.toFixed(2),
-                recall: recall.toFixed(2),
-                f1: f1.toFixed(4),
-                totalTP, totalTN, totalFP, totalFN
-            };
-        }
+            // Update overall metrics display
+            document.getElementById('metricAccuracy').textContent = accuracy.toFixed(2) + '%';
+            document.getElementById('metricPrecision').textContent = precision.toFixed(2) + '%';
+            document.getElementById('metricRecall').textContent = recall.toFixed(2) + '%';
+            document.getElementById('metricF1').textContent = f1.toFixed(2) + '%';
+            document.getElementById('metricTotalTP').textContent = totalTP;
+            document.getElementById('metricTotalTN').textContent = totalTN;
+            document.getElementById('metricTotalFP').textContent = totalFP;
+            document.getElementById('metricTotalFN').textContent = totalFN;
 
-        function getFilteredValidationData() {
-            const predFilter = document.getElementById('predictionFilter').value;
-            const actualFilter = document.getElementById('actualFilter').value;
-            const accuracyFilter = document.getElementById('accuracyTypeFilter').value;
-
-            return APP.validationData.filter(row => {
-                let match = true;
-
-                if (predFilter !== 'all') {
-                    match = match && row.predicted === parseInt(predFilter);
-                }
-
-                if (actualFilter !== 'all') {
-                    match = match && row.actual === parseInt(actualFilter);
-                }
-
-                if (accuracyFilter !== 'all') {
-                    const isCorrect = row.predicted === row.actual;
-                    match = match && (accuracyFilter === 'correct' ? isCorrect : !isCorrect);
-                }
-
-                return match;
-            });
-        }
-
-        function updateValidationTable() {
-            const tbody = document.getElementById('validationTableBody');
+            // Build daily summary table
+            const tbody = document.getElementById('dailySummaryBody');
             tbody.innerHTML = '';
 
-            // Only show data if validation file has been loaded
-            if (APP.validationData.length === 0) {
-                const emptyRow = document.createElement('tr');
-                emptyRow.innerHTML = `
-                    <td colspan="8" style="text-align: center; padding: 20px; opacity: 0.6;">
-                        No validation data loaded. Please upload output.csv file.
-                    </td>
-                `;
-                tbody.appendChild(emptyRow);
-                return;
-            }
-
-            const filteredData = getFilteredValidationData();
-            
-            if (filteredData.length === 0) {
-                const emptyRow = document.createElement('tr');
-                emptyRow.innerHTML = `
-                    <td colspan="8" style="text-align: center; padding: 20px; opacity: 0.6;">
-                        No records match the selected filters.
-                    </td>
-                `;
-                tbody.appendChild(emptyRow);
-                return;
-            }
-
-            filteredData.forEach(row => {
-                const total = row.tp + row.tn + row.fp + row.fn;
-                const dailyAccuracy = total > 0 ? (((row.tp + row.tn) / total) * 100).toFixed(2) : '0.00';
-                const isCorrect = row.predicted === row.actual;
+            sortedDates.forEach(date => {
+                const d = dateMap[date];
+                const dayTotal = d.tp + d.tn + d.fp + d.fn;
+                const dayAccuracy = dayTotal > 0 ? (((d.tp + d.tn) / dayTotal) * 100).toFixed(1) : '0.0';
 
                 const tr = document.createElement('tr');
-                tr.style.backgroundColor = isCorrect ? 'rgba(74, 222, 128, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                tr.style.cursor = 'pointer';
+                tr.style.transition = 'background 0.2s ease';
+                tr.addEventListener('mouseenter', () => tr.style.background = 'rgba(74, 85, 104, 0.3)');
+                tr.addEventListener('mouseleave', () => tr.style.background = '');
+                tr.addEventListener('click', () => showDayDrilldown(date, dateMap[date].rows));
+
                 tr.innerHTML = `
-                    <td>${row.date}</td>
-                    <td>${row.predicted === 1 ? 'Fault' : 'No Fault'}</td>
-                    <td>${row.actual === 1 ? 'Fault' : 'No Fault'}</td>
-                    <td>${row.tp}</td>
-                    <td>${row.tn}</td>
-                    <td>${row.fp}</td>
-                    <td>${row.fn}</td>
-                    <td><strong>${dailyAccuracy}%</strong></td>
+                    <td style="font-weight: 600;">${date}</td>
+                    <td style="color: #10b981; font-weight: 600;">${d.tp}</td>
+                    <td style="color: #9ca3af; font-weight: 600;">${d.tn}</td>
+                    <td style="color: #ef4444; font-weight: 600;">${d.fp}</td>
+                    <td style="color: #f59e0b; font-weight: 600;">${d.fn}</td>
+                    <td>${d.total}</td>
+                    <td><strong>${dayAccuracy}%</strong></td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Store dateMap for later use
+            APP.dailyConfusionData = dateMap;
+        }
+
+        // Show user drilldown for a selected date
+        function showDayDrilldown(date, rows) {
+            const panel = document.getElementById('userDrilldownPanel');
+            const tbody = document.getElementById('drilldownBody');
+            const dateLabel = document.getElementById('drilldownDate');
+            const countLabel = document.getElementById('drilldownCount');
+
+            panel.style.display = 'block';
+            dateLabel.textContent = date;
+            countLabel.textContent = `(${rows.length} users)`;
+            tbody.innerHTML = '';
+
+            // Sort by number of rules triggered (descending = most relevant first)
+            const sortedRows = [...rows].sort((a, b) => {
+                const aCount = a.ruleResults.reduce((sum, r) => sum + r.value, 0);
+                const bCount = b.ruleResults.reduce((sum, r) => sum + r.value, 0);
+                return bCount - aCount;
+            });
+
+            sortedRows.forEach(row => {
+                const cls = classifyRow(row);
+                const rulesTriggered = row.ruleResults.reduce((sum, r) => sum + r.value, 0);
+
+                // Get individual rule values (default 0 if not found)
+                const getRuleVal = (ruleName) => {
+                    const r = row.ruleResults.find(x => x.name === ruleName);
+                    return r ? r.value : 0;
+                };
+
+                const r1 = getRuleVal('Rule1_SensorError');
+                const r2 = getRuleVal('Rule2_Critical');
+                const r3 = getRuleVal('Rule3_Degrading');
+                const r4 = getRuleVal('Rule4_SuddenDrop');
+                const r5 = getRuleVal('Rule5_RX_Instability');
+                const r6 = getRuleVal('Rule6_PersistentLowSignal');
+                const r7 = getRuleVal('Rule7_FrequentFault');
+
+                const clsColors = { TP: '#10b981', TN: '#9ca3af', FP: '#ef4444', FN: '#f59e0b' };
+                const clsBg = { TP: 'rgba(16,185,129,0.15)', TN: 'rgba(156,163,175,0.1)', FP: 'rgba(239,68,68,0.15)', FN: 'rgba(245,158,11,0.15)' };
+                const ruleBadge = (val) => val === 1
+                    ? '<span class="badge bg-danger">1</span>'
+                    : '<span class="badge bg-secondary" style="opacity:0.4;">0</span>';
+
+                const tr = document.createElement('tr');
+                tr.style.backgroundColor = clsBg[cls] || '';
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${row.username}</td>
+                    <td>${ruleBadge(r1)}</td>
+                    <td>${ruleBadge(r2)}</td>
+                    <td>${ruleBadge(r3)}</td>
+                    <td>${ruleBadge(r4)}</td>
+                    <td>${ruleBadge(r5)}</td>
+                    <td>${ruleBadge(r6)}</td>
+                    <td>${ruleBadge(r7)}</td>
+                    <td><strong>${rulesTriggered}</strong></td>
+                    <td><span class="badge ${row.systemOutput === 1 ? 'bg-warning' : 'bg-success'}">${row.systemOutput}</span></td>
+                    <td><span class="badge ${row.finalFault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.finalFault}</span></td>
+                    <td><span class="badge" style="background: ${clsColors[cls]}; color: white; font-weight: 700;">${cls}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Scroll to drilldown panel
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         // ============================================
@@ -1360,6 +1450,7 @@
             updateCharts();
             updateDataTable();
             updateRulesList();
+            buildDailyConfusionMatrix();
             
             // Initialize date range slider
             initializeDateRangeSlider();
@@ -1433,9 +1524,9 @@
             if (filteredData.length === 0) {
                 document.getElementById('kpiTotalRecords').textContent = '0';
                 document.getElementById('kpiPredictedFaults').textContent = '0';
-                document.getElementById('kpiCritical').textContent = '0';
-                document.getElementById('kpiMarginal').textContent = '0';
-                document.getElementById('kpiGood').textContent = '0';
+                document.getElementById('kpiActualFaults').textContent = '0';
+                document.getElementById('kpiCorrectPredictions').textContent = '0';
+                document.getElementById('kpiIncorrectPredictions').textContent = '0';
                 return;
             }
 
@@ -1445,19 +1536,18 @@
             document.getElementById('kpiPredictedFaults').textContent = predictedFaults;
             
             const actualFaults = filteredData.filter(r => r.finalFault === 1).length;
-            document.getElementById('kpiCritical').textContent = actualFaults;
+            document.getElementById('kpiActualFaults').textContent = actualFaults;
             
             const correctPredictions = filteredData.filter(r => r.systemOutput === r.finalFault).length;
-            document.getElementById('kpiMarginal').textContent = correctPredictions;
+            document.getElementById('kpiCorrectPredictions').textContent = correctPredictions;
             
-            const falsePredictions = filteredData.filter(r => r.systemOutput !== r.finalFault).length;
-            document.getElementById('kpiGood').textContent = falsePredictions;
+            const incorrectPredictions = filteredData.filter(r => r.systemOutput !== r.finalFault).length;
+            document.getElementById('kpiIncorrectPredictions').textContent = incorrectPredictions;
 
             // Analytics
-            document.getElementById('analyticsCritical').textContent = actualFaults;
-            document.getElementById('analyticsMarginal').textContent = correctPredictions;
-            document.getElementById('analyticsGood').textContent = falsePredictions;
-            document.getElementById('analyticsFaults').textContent = predictedFaults;
+            document.getElementById('analyticsPredicted').textContent = predictedFaults;
+            document.getElementById('analyticsActual').textContent = actualFaults;
+            document.getElementById('analyticsCorrect').textContent = correctPredictions;
             document.getElementById('analyticsFaultRate').textContent = 
                 ((actualFaults / filteredData.length) * 100).toFixed(1) + '%';
         }
@@ -1484,10 +1574,15 @@
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${row.date}</td>
                     <td>${row.username}</td>
+                    <td>${row.date}</td>
                     <td style="font-size: 11px;">${ruleResultsHTML}</td>
-                    <td><span class="badge ${row.systemOutput === 1 ? 'bg-warning' : 'bg-success'}">${row.systemOutput === 1 ? 'FAULT' : 'OK'}</span></td>
+                    <td><span class="badge ${row.systemOutput === 1 ? 'bg-warning' : 'bg-success'}">${row.systemOutput}</span></td>
+                    <td><span class="badge ${row.sameDayFault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.sameDayFault}</span></td>
+                    <td><span class="badge ${row.week1Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week1Fault}</span></td>
+                    <td><span class="badge ${row.week2Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week2Fault}</span></td>
+                    <td><span class="badge ${row.week3Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week3Fault}</span></td>
+                    <td><span class="badge ${row.week4Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week4Fault}</span></td>
                     <td><span class="badge ${row.finalFault === 1 ? 'badge-fault' : 'badge-no-fault'}">${row.finalFault === 1 ? 'Fault' : 'No Fault'}</span></td>
                 `;
                 tbody.appendChild(tr);
@@ -1734,22 +1829,21 @@
             document.getElementById('kpiPredictedFaults').textContent = predictedFaults;
             
             const actualFaults = APP.data.filter(r => r.finalFault === 1).length;
-            document.getElementById('kpiCritical').textContent = actualFaults;
+            document.getElementById('kpiActualFaults').textContent = actualFaults;
             
             const correctPredictions = APP.data.filter(r => r.systemOutput === r.finalFault).length;
-            document.getElementById('kpiMarginal').textContent = correctPredictions;
+            document.getElementById('kpiCorrectPredictions').textContent = correctPredictions;
             
-            const falsePredictions = APP.data.filter(r => r.systemOutput !== r.finalFault).length;
-            document.getElementById('kpiGood').textContent = falsePredictions;
+            const incorrectPredictions = APP.data.filter(r => r.systemOutput !== r.finalFault).length;
+            document.getElementById('kpiIncorrectPredictions').textContent = incorrectPredictions;
             
-            const activeRules = APP.defaultRules.length;
+            const activeRules = APP.defaultRules.filter(r => r.enabled).length;
             document.getElementById('kpiActiveRules').textContent = activeRules;
 
             // Analytics
-            document.getElementById('analyticsCritical').textContent = actualFaults;
-            document.getElementById('analyticsMarginal').textContent = correctPredictions;
-            document.getElementById('analyticsGood').textContent = falsePredictions;
-            document.getElementById('analyticsFaults').textContent = predictedFaults;
+            document.getElementById('analyticsPredicted').textContent = predictedFaults;
+            document.getElementById('analyticsActual').textContent = actualFaults;
+            document.getElementById('analyticsCorrect').textContent = correctPredictions;
             document.getElementById('analyticsFaultRate').textContent = 
                 ((actualFaults / APP.data.length) * 100).toFixed(1) + '%';
         }
@@ -1989,10 +2083,15 @@
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td>${row.date}</td>
                     <td>${row.username}</td>
+                    <td>${row.date}</td>
                     <td style="font-size: 11px;">${ruleResultsHTML}</td>
-                    <td><span class="badge ${row.systemOutput === 1 ? 'bg-warning' : 'bg-success'}">${row.systemOutput === 1 ? 'FAULT' : 'OK'}</span></td>
+                    <td><span class="badge ${row.systemOutput === 1 ? 'bg-warning' : 'bg-success'}">${row.systemOutput}</span></td>
+                    <td><span class="badge ${row.sameDayFault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.sameDayFault}</span></td>
+                    <td><span class="badge ${row.week1Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week1Fault}</span></td>
+                    <td><span class="badge ${row.week2Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week2Fault}</span></td>
+                    <td><span class="badge ${row.week3Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week3Fault}</span></td>
+                    <td><span class="badge ${row.week4Fault === 1 ? 'bg-danger' : 'bg-secondary'}">${row.week4Fault}</span></td>
                     <td><span class="badge ${row.finalFault === 1 ? 'badge-fault' : 'badge-no-fault'}">${row.finalFault === 1 ? 'Fault' : 'No Fault'}</span></td>
                 `;
                 tbody.appendChild(tr);
