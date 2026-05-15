@@ -410,29 +410,27 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title"><i class="fas fa-calculator"></i> Rule Weights & Calculation</h5>
+                        <h5 class="card-title"><i class="fas fa-calculator"></i> Rule Weights</h5>
                     </div>
-                    <div class="card-body" style="max-height: 700px; overflow-y: auto;">
-                        <!-- Weight Formula Explanation -->
-                        <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
-                            <div style="font-weight: 600; color: #60a5fa; margin-bottom: 0.5rem;">📊 Risk Formula</div>
-                            <div style="color: #b0b0b0; font-size: 0.9rem; line-height: 1.6; font-family: 'Courier New', monospace;">
-                                <div>Risk % = Σ(Rule × Weight) ÷ Sum(Active Weights) × 100</div>
-                                <div style="margin-top: 0.5rem; color: #a0a0a0; font-size: 0.85rem;">
-                                    Threshold: 70% → Flagged At Risk
-                                </div>
+                    <div class="card-body" style="max-height: 600px; overflow-y: auto; padding: 1rem;">
+                        <!-- Weight Formula -->
+                        <div style="background: rgba(59, 130, 246, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem;">
+                            <div style="font-weight: 600; color: #60a5fa; margin-bottom: 0.25rem;">📊 Formula:</div>
+                            <div style="color: #b0b0b0; font-size: 0.8rem; font-family: 'Courier New', monospace;">
+                                Risk % = Σ(Rule × Weight) ÷ Total Weight × 100<br>
+                                <small style="color: #a0a0a0;">Threshold: 70% = At Risk</small>
                             </div>
                         </div>
 
-                        <!-- Editable Rules Section -->
-                        <div id="rulesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
-                            <p style="color: #a0a0a0;">Upload CSV file to load rules...</p>
+                        <!-- Editable Rules -->
+                        <div id="rulesContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <p style="color: #a0a0a0; font-size: 0.9rem;">Upload CSV...</p>
                         </div>
 
-                        <!-- Total Weight Indicator -->
-                        <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
-                            <div style="color: #b0b0b0; font-size: 0.85rem; margin-bottom: 0.5rem;">Total Active Weight</div>
-                            <div style="font-size: 1.5rem; font-weight: 700; color: #6ee7b7;" id="totalWeight">100%</div>
+                        <!-- Total Weight -->
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 0.75rem; border-radius: 8px; margin-top: 1rem; text-align: center;">
+                            <div style="color: #b0b0b0; font-size: 0.8rem;">Total Weight</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #6ee7b7;" id="totalWeight">100%</div>
                         </div>
                     </div>
                 </div>
@@ -442,7 +440,7 @@
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title"><i class="fas fa-filter"></i> Advanced Filters</h5>
+                        <h5 class="card-title"><i class="fas fa-filter"></i> Filters</h5>
                     </div>
                     <div class="card-body">
                         <div class="filter-group">
@@ -483,10 +481,37 @@
                             <button id="clearFiltersBtn" class="btn btn-secondary">
                                 <i class="fas fa-redo"></i> Clear All Filters
                             </button>
-                            <button id="exportBtn" class="btn btn-success">
-                                <i class="fas fa-download"></i> Export CSV
+                            <button id="exportCsvBtn" class="btn btn-success">
+                                <i class="fas fa-download"></i> CSV
+                            </button>
+                            <button id="exportTxtBtn" class="btn btn-info">
+                                <i class="fas fa-file-alt"></i> TXT
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts/Overview Section -->
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-chart-pie"></i> Risk Distribution</h5>
+                    </div>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-chart-bar"></i> Prediction Accuracy</h5>
+                    </div>
+                    <div class="card-body" style="height: 300px;">
+                        <canvas id="accuracyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -542,6 +567,7 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
         // Global state
         let allData = [];
@@ -575,10 +601,130 @@
             'frequent_fault': 'Frequent Fault'
         };
 
+        // Chart instances
+        let riskChart = null;
+        let accuracyChart = null;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             setupEventListeners();
+            initializeCharts();
         });
+
+        function initializeCharts() {
+            // Risk Distribution Chart
+            const riskCtx = document.getElementById('riskChart');
+            if (riskCtx) {
+                riskChart = new Chart(riskCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['At Risk (70%+)', 'Medium Risk (40-70%)', 'Low Risk (<40%)'],
+                        datasets: [{
+                            data: [0, 0, 0],
+                            backgroundColor: ['#ff6b6b', '#fbbf24', '#6ee7b7'],
+                            borderColor: 'rgba(30, 40, 60, 0.4)',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#e0e0e0', font: { size: 11 } },
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Accuracy Chart
+            const accCtx = document.getElementById('accuracyChart');
+            if (accCtx) {
+                accuracyChart = new Chart(accCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Correct Alert (TP)', 'Correct Safe (TN)', 'False Alert (FP)', 'Missed Alert (FN)'],
+                        datasets: [{
+                            label: 'Count',
+                            data: [0, 0, 0, 0],
+                            backgroundColor: ['#6ee7b7', '#d1d5db', '#fbbf24', '#ff6b6b'],
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#e0e0e0' },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            },
+                            y: {
+                                ticks: { color: '#e0e0e0' },
+                                grid: { color: 'rgba(255,255,255,0.05)' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateCharts() {
+            if (allData.length === 0) return;
+
+            // Get currently visible data (filtered)
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            const areas = Array.from(document.getElementById('areaFilter').selectedOptions).map(o => o.value);
+            const segments = Array.from(document.getElementById('segmentFilter').selectedOptions).map(o => o.value);
+            const minRisk = parseFloat(document.getElementById('riskFilter').value);
+            const date = document.getElementById('dateFilter').value;
+            const month = document.getElementById('monthFilter').value;
+
+            let filtered = allData.filter(row => {
+                if (search && !(row.phone_number.toLowerCase().includes(search) || row.customer_name.toLowerCase().includes(search))) return false;
+                if (areas.length > 0 && !areas.includes(row.area_code)) return false;
+                if (segments.length > 0 && !segments.includes(row.business_segment)) return false;
+                if (minRisk > 0 && parseFloat(row.calculated_risk_percentage) < minRisk) return false;
+                if (date && row.date_recorded !== date) return false;
+                if (month && !row.date_recorded.startsWith(month)) return false;
+                return true;
+            });
+
+            // Update Risk Chart
+            const atRisk = filtered.filter(r => parseFloat(r.calculated_risk_percentage) >= 70).length;
+            const mediumRisk = filtered.filter(r => parseFloat(r.calculated_risk_percentage) >= 40 && parseFloat(r.calculated_risk_percentage) < 70).length;
+            const lowRisk = filtered.filter(r => parseFloat(r.calculated_risk_percentage) < 40).length;
+
+            if (riskChart) {
+                riskChart.data.datasets[0].data = [atRisk, mediumRisk, lowRisk];
+                riskChart.update();
+            }
+
+            // Update Accuracy Chart
+            let tp = 0, tn = 0, fp = 0, fn = 0;
+            filtered.forEach(row => {
+                const flagged = parseInt(row.flagged_at_risk);
+                const fault = parseInt(row.fault_next_2_weeks);
+                if (flagged == 1 && fault == 1) tp++;
+                else if (flagged == 0 && fault == 0) tn++;
+                else if (flagged == 1 && fault == 0) fp++;
+                else if (flagged == 0 && fault == 1) fn++;
+            });
+
+            if (accuracyChart) {
+                accuracyChart.data.datasets[0].data = [tp, tn, fp, fn];
+                accuracyChart.update();
+            }
+        }
 
         function setupEventListeners() {
             document.getElementById('csvUpload').addEventListener('change', handleFileUpload);
@@ -593,7 +739,8 @@
             document.getElementById('dateFilter').addEventListener('change', applyFilters);
             document.getElementById('monthFilter').addEventListener('change', applyFilters);
             document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('exportCsvBtn').addEventListener('click', () => exportData('csv'));
+            document.getElementById('exportTxtBtn').addEventListener('click', () => exportData('txt'));
         }
 
         function handleFileUpload(event) {
@@ -649,6 +796,12 @@
             document.getElementById('segmentFilter').innerHTML = '<option value="">Load CSV first...</option>';
             document.getElementById('rulesContainer').innerHTML = '<p style="color: #a0a0a0;">Upload CSV file to load rules...</p>';
             document.getElementById('totalWeight').textContent = '0%';
+            
+            // Reset charts
+            if (riskChart) riskChart.data.datasets[0].data = [0, 0, 0];
+            if (riskChart) riskChart.update();
+            if (accuracyChart) accuracyChart.data.datasets[0].data = [0, 0, 0, 0];
+            if (accuracyChart) accuracyChart.update();
         }
 
         function updateFilterOptions() {
@@ -688,21 +841,16 @@
                 const weightPercent = (weight * 100).toFixed(0);
                 
                 const ruleDiv = document.createElement('div');
-                ruleDiv.style.cssText = 'margin-bottom: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6;';
+                ruleDiv.style.cssText = 'margin-bottom: 0.5rem; padding: 0.6rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; border-left: 2px solid #3b82f6;';
                 
                 ruleDiv.innerHTML = `
-                    <div style="margin-bottom: 0.75rem;">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-                            <input type="checkbox" id="rule_${rule}" class="rule-checkbox" checked style="width: 18px; height: 18px; cursor: pointer;">
-                            <label for="rule_${rule}" style="cursor: pointer; font-weight: 600; color: #e0e0e0; margin-bottom: 0; flex: 1;">
-                                ${label}
-                            </label>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 2rem;">
-                            <label for="weight_${rule}" style="font-size: 0.85rem; color: #b0b0b0; min-width: 50px;">Weight:</label>
-                            <input type="number" id="weight_${rule}" class="weight-input form-control" min="0" max="1" step="0.01" value="${weight.toFixed(2)}" style="flex: 1; font-size: 0.9rem; padding: 0.4rem 0.5rem;">
-                            <span style="color: #a0a0a0; min-width: 40px; text-align: right;" id="weightPercent_${rule}">${weightPercent}%</span>
-                        </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem;">
+                        <input type="checkbox" id="rule_${rule}" class="rule-checkbox" checked style="width: 16px; height: 16px; cursor: pointer;">
+                        <label for="rule_${rule}" style="cursor: pointer; font-weight: 500; color: #e0e0e0; margin-bottom: 0; flex: 1; min-width: 120px;">
+                            ${label}
+                        </label>
+                        <input type="number" id="weight_${rule}" class="weight-input" min="0" max="1" step="0.01" value="${weight.toFixed(2)}" style="width: 50px; padding: 0.3rem; font-size: 0.85rem; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; color: #e0e0e0;">
+                        <span style="color: #a0a0a0; min-width: 35px; text-align: right; font-size: 0.85rem;" id="weightPercent_${rule}">${weightPercent}%</span>
                     </div>
                 `;
                 
@@ -717,6 +865,7 @@
                     recalculateRisks();
                     updateStatistics();
                     updateTotalWeight();
+                    updateCharts();
                     applyFilters();
                 });
             });
@@ -726,20 +875,17 @@
                     const rule = this.id.replace('weight_', '');
                     let weight = parseFloat(this.value);
                     
-                    // Clamp between 0 and 1
                     if (isNaN(weight) || weight < 0) weight = 0;
                     if (weight > 1) weight = 1;
                     
                     RULE_WEIGHTS[rule] = weight;
                     this.value = weight.toFixed(2);
-                    
-                    // Update percentage display
                     document.getElementById(`weightPercent_${rule}`).textContent = (weight * 100).toFixed(0) + '%';
                     
-                    // Recalculate everything
                     recalculateRisks();
                     updateStatistics();
                     updateTotalWeight();
+                    updateCharts();
                     applyFilters();
                 });
             });
@@ -848,6 +994,7 @@
             });
 
             renderTable(filtered);
+            updateCharts();
         }
 
         function renderTable(data) {
@@ -873,19 +1020,19 @@
 
                 if (flagged == 1 && fault == 1) {
                     predictionClass = 'tp';
-                    classificationLabel = 'TP';
+                    classificationLabel = 'Correct Alert (TP)';
                     classColor = '#6ee7b7'; // Green
                 } else if (flagged == 0 && fault == 0) {
                     predictionClass = 'tn';
-                    classificationLabel = 'TN';
+                    classificationLabel = 'Correct Safe (TN)';
                     classColor = '#d1d5db'; // Gray
                 } else if (flagged == 1 && fault == 0) {
                     predictionClass = 'fp';
-                    classificationLabel = 'FP';
+                    classificationLabel = 'False Alert (FP)';
                     classColor = '#fbbf24'; // Yellow
                 } else {
                     predictionClass = 'fn';
-                    classificationLabel = 'FN';
+                    classificationLabel = 'Missed Alert (FN)';
                     classColor = '#ff6b6b'; // Red
                 }
 
@@ -929,7 +1076,7 @@
             applyFilters();
         }
 
-        function exportData() {
+        function exportData(format = 'csv') {
             if (allData.length === 0) {
                 alert('No data to export. Upload a CSV file first.');
                 return;
@@ -953,19 +1100,44 @@
                 return true;
             });
 
-            // Create CSV
             const headers = Object.keys(allData[0]);
-            let csv = headers.join(',') + '\n';
-            filtered.forEach(row => {
-                csv += headers.map(h => row[h]).join(',') + '\n';
-            });
+            let content, blob, filename, mimeType;
+
+            if (format === 'csv') {
+                // CSV format
+                content = headers.join(',') + '\n';
+                filtered.forEach(row => {
+                    content += headers.map(h => row[h]).join(',') + '\n';
+                });
+                mimeType = 'text/csv';
+                filename = 'filtered_data.csv';
+            } else if (format === 'txt') {
+                // Text format - formatted table
+                content = '='.repeat(120) + '\n';
+                content += '  FAULT PREDICTION DASHBOARD - FILTERED DATA REPORT\n';
+                content += '='.repeat(120) + '\n\n';
+                content += `Records: ${filtered.length} | Generated: ${new Date().toLocaleString()}\n\n`;
+                
+                // Headers
+                content += headers.map(h => h.padEnd(15)).join(' ') + '\n';
+                content += '-'.repeat(120) + '\n';
+                
+                // Data rows
+                filtered.forEach(row => {
+                    content += headers.map(h => String(row[h] || '').padEnd(15)).join(' ') + '\n';
+                });
+                
+                content += '\n' + '='.repeat(120) + '\n';
+                mimeType = 'text/plain';
+                filename = 'filtered_data.txt';
+            }
 
             // Download
-            const blob = new Blob([csv], { type: 'text/csv' });
+            blob = new Blob([content], { type: mimeType });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'filtered_data.csv';
+            a.download = filename;
             a.click();
             window.URL.revokeObjectURL(url);
         }
