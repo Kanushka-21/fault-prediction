@@ -877,7 +877,12 @@
         function changePage(delta) {
             const next = currentPage + delta;
             if (next < 1 || next > totalPages) return;
-            if (serverMode) fetchServerPage(next);
+            currentPage = next;
+            if (serverMode) {
+                fetchServerPage(next);
+            } else {
+                applyFilters();
+            }
         }
 
         function updatePaginationBar() {

@@ -235,40 +235,41 @@ def classify_vectorized(flagged: pd.Series, fault: pd.Series) -> pd.Series:
 
 def apply_filters(source_df):
     """
-    Apply all request query-param filters to a dataframe.
-    Shared by /api/data and /api/export to avoid duplication.
+    Apply all request query-param filters to a dataframe using boolean masking.
+    More memory-efficient than repeated copying, especially for 8M+ rows.
     """
-    filtered = source_df.copy()
+    mask = pd.Series(True, index=source_df.index)
 
     # Phone / name search
     search = request.args.get('phone_number', '').strip()
     if search:
-        mask = (
-            filtered['phone_number'].astype(str).str.contains(search, case=False, na=False) |
-            filtered['customer_name'].astype(str).str.contains(search, case=False, na=False)
-        )
-        filtered = filtered[mask]
+        # Use str.contains once on each column and OR them
+        phone_mask = source_df['phone_number'].astype(str).str.contains(search, case=False, na=False)
+        name_mask = source_df['customer_name'].astype(str).str.contains(search, case=False, na=False)
+        mask &= (phone_mask | name_mask)
 
     # Area codes
     areas = request.args.getlist('area_codes')
     if areas:
-        filtered = filtered[filtered['area_code'].isin(areas)]
+        mask &= source_df['area_code'].isin(areas)
 
     # Business segments
     segments = request.args.getlist('segments')
     if segments:
-        filtered = filtered[filtered['business_segment'].isin(segments)]
+        mask &= source_df['business_segment'].isin(segments)
 
     # Risk range
     try:
         min_risk = float(request.args.get('min_risk', 0))
-        filtered = filtered[filtered['calculated_risk_percentage'] >= min_risk]
+        if min_risk > 0:
+            mask &= (source_df['calculated_risk_percentage'] >= min_risk)
     except (ValueError, TypeError):
         pass
 
     try:
         max_risk = float(request.args.get('max_risk', 100))
-        filtered = filtered[filtered['calculated_risk_percentage'] <= max_risk]
+        if max_risk < 100:
+            mask &= (source_df['calculated_risk_percentage'] <= max_risk)
     except (ValueError, TypeError):
         pass
 
@@ -276,8 +277,8 @@ def apply_filters(source_df):
     date_str = request.args.get('date', '').strip()
     if date_str:
         try:
-            date_obj = pd.to_datetime(date_str)
-            filtered = filtered[filtered['date_recorded'].dt.date == date_obj.date()]
+            date_obj = pd.to_datetime(date_str).date()
+            mask &= (source_df['date_recorded'].dt.date == date_obj)
         except Exception:
             pass
 
@@ -285,19 +286,29 @@ def apply_filters(source_df):
     month_str = request.args.get('month', '').strip()
     if month_str:
         try:
-            filtered = filtered[filtered['date_recorded'].dt.strftime('%Y-%m') == month_str]
+            mask &= (source_df['date_recorded'].dt.strftime('%Y-%m') == month_str)
         except Exception:
             pass
 
-    return filtered
+    return source_df[mask]
 
 
 def format_response(df_slice):
     """Serialize a dataframe slice for JSON. Converts dates and rounds floats."""
+    if df_slice.empty:
+        return []
+        
     out = df_slice.copy()
-    out['date_recorded'] = out['date_recorded'].dt.strftime('%Y-%m-%d')
-    out['calculated_risk_percentage'] = out['calculated_risk_percentage'].round(1)
-    out['rule_score_weighted'] = out['rule_score_weighted'].round(4)
+    # Safe date conversion
+    if 'date_recorded' in out.columns:
+        out['date_recorded'] = out['date_recorded'].dt.strftime('%Y-%m-%d')
+    
+    # Round only if columns exist
+    if 'calculated_risk_percentage' in out.columns:
+        out['calculated_risk_percentage'] = out['calculated_risk_percentage'].round(1)
+    if 'rule_score_weighted' in out.columns:
+        out['rule_score_weighted'] = out['rule_score_weighted'].round(4)
+        
     # Replace NaN with None (JSON null)
     out = out.where(pd.notnull(out), None)
     return out.to_dict(orient='records')
@@ -310,21 +321,31 @@ def format_response(df_slice):
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
     """
-    Summary statistics — fully vectorized, no iterrows.
-    Fast even on 8M+ rows.
+    Summary statistics — fully vectorized.
+    Uses direct boolean counting for performance on 8M+ rows.
     """
     try:
         total = len(df)
+        if total == 0:
+            return jsonify({
+                'status': 'success', 'total_records': 0, 'at_risk_count': 0,
+                'faults_occurred': 0, 'accuracy_percentage': 0,
+                'classifications': {'TP': 0, 'TN': 0, 'FP': 0, 'FN': 0}
+            })
+
         at_risk = int((df['flagged_at_risk'] == 1).sum())
         faults  = int((df['fault_next_2_weeks'] == 1).sum())
 
-        # Vectorized confusion matrix
-        classes = classify_vectorized(df['flagged_at_risk'], df['fault_next_2_weeks'])
-        counts  = classes.value_counts()
-        tp = int(counts.get('TP', 0))
-        tn = int(counts.get('TN', 0))
-        fp = int(counts.get('FP', 0))
-        fn = int(counts.get('FN', 0))
+        # Direct boolean sums are much faster than creating a string series
+        flagged = (df['flagged_at_risk'] == 1)
+        not_flagged = ~flagged
+        has_fault = (df['fault_next_2_weeks'] == 1)
+        no_fault = ~has_fault
+
+        tp = int((flagged & has_fault).sum())
+        tn = int((not_flagged & no_fault).sum())
+        fp = int((flagged & no_fault).sum())
+        fn = int((not_flagged & has_fault).sum())
 
         accuracy = round((tp + tn) / total * 100, 2) if total > 0 else 0.0
 
@@ -338,8 +359,8 @@ def get_stats():
             'unique_areas':         sorted(df['area_code'].dropna().unique().tolist()),
             'unique_segments':      sorted(df['business_segment'].dropna().unique().tolist()),
             'date_range': {
-                'start': df['date_recorded'].min().strftime('%Y-%m-%d'),
-                'end':   df['date_recorded'].max().strftime('%Y-%m-%d'),
+                'start': df['date_recorded'].min().strftime('%Y-%m-%d') if not df.empty else 'N/A',
+                'end':   df['date_recorded'].max().strftime('%Y-%m-%d') if not df.empty else 'N/A',
             }
         })
     except Exception as e:
@@ -350,22 +371,14 @@ def get_stats():
 def get_data():
     """
     Paginated, filtered customer data.
-
-    Query Parameters (filters same as before, plus):
-      page      : int, 1-based (default 1)
-      page_size : int (default 500, max 2000)
+    Classifies only the visible page to save memory.
     """
     try:
         filtered = apply_filters(df)
 
-        # Add classification column (vectorized)
-        filtered = filtered.copy()
-        filtered['prediction_class'] = classify_vectorized(
-            filtered['flagged_at_risk'], filtered['fault_next_2_weeks']
-        )
-
         # Sort by risk descending
-        filtered = filtered.sort_values('calculated_risk_percentage', ascending=False)
+        if not filtered.empty:
+            filtered = filtered.sort_values('calculated_risk_percentage', ascending=False)
 
         total_count = len(filtered)
 
@@ -378,7 +391,13 @@ def get_data():
 
         start = (page - 1) * page_size
         end   = start + page_size
-        page_df = filtered.iloc[start:end]
+        page_df = filtered.iloc[start:end].copy()
+
+        # ONLY classify the final page — efficient for 8M row source
+        if not page_df.empty:
+            page_df['prediction_class'] = classify_vectorized(
+                page_df['flagged_at_risk'], page_df['fault_next_2_weeks']
+            )
 
         total_pages = max(1, (total_count + page_size - 1) // page_size)
 
@@ -400,13 +419,16 @@ def export_data():
     """Export filtered data as a downloadable CSV."""
     try:
         filtered = apply_filters(df)
+        if filtered.empty:
+            return jsonify({'status': 'error', 'message': 'No data to export'}), 400
+            
         filtered = filtered.copy()
         filtered['prediction_class'] = classify_vectorized(
             filtered['flagged_at_risk'], filtered['fault_next_2_weeks']
         )
         filtered['date_recorded'] = filtered['date_recorded'].dt.strftime('%Y-%m-%d')
 
-        # Stream directly — don't touch disk
+        # Stream directly
         buf = io.StringIO()
         filtered.to_csv(buf, index=False)
         buf.seek(0)
@@ -450,7 +472,7 @@ def upload_file():
         raw['fault_next_2_weeks'] = pd.to_numeric(raw['fault_next_2_weeks'], errors='coerce').fillna(0).astype(int)
 
         df = raw
-        print(f"✓ Upload accepted: {len(df):,} records from {f.filename}")
+        print(f"[OK] Upload accepted: {len(df):,} records from {f.filename}")
 
         return jsonify({
             'status':   'success',
