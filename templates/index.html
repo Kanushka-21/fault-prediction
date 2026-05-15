@@ -248,8 +248,7 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
-        let allData = [];
-        let serverMode = false;
+        let serverMode = true;
         let currentPage = 1;
         const PAGE_SIZE = 500;
         let totalPages = 1;
@@ -276,13 +275,13 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             initializeCharts();
-            fetchServerStats();
-            fetchServerPage(1);
+            // Solid reset on load to ensure 0 state
+            solidReset();
         });
 
         function setupEventListeners() {
             document.getElementById('csvUpload').addEventListener('change', handleFileUpload);
-            document.getElementById('clearFileBtn').addEventListener('click', clearFile);
+            document.getElementById('clearFileBtn').addEventListener('click', solidReset);
             document.getElementById('searchFilter').addEventListener('input', () => { currentPage=1; applyFilters(); });
             document.getElementById('areaFilter').addEventListener('change', () => { currentPage=1; applyFilters(); });
             document.getElementById('segmentFilter').addEventListener('change', () => { currentPage=1; applyFilters(); });
@@ -293,8 +292,45 @@
             document.getElementById('dateFilter').addEventListener('change', () => { currentPage=1; applyFilters(); });
             document.getElementById('monthFilter').addEventListener('change', () => { currentPage=1; applyFilters(); });
             document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-            document.getElementById('exportCsvBtn').addEventListener('click', () => exportData('csv'));
-            document.getElementById('exportTxtBtn').addEventListener('click', () => exportData('txt'));
+            document.getElementById('exportCsvBtn').addEventListener('click', () => triggerExport('csv'));
+            document.getElementById('exportTxtBtn').addEventListener('click', () => triggerExport('txt'));
+        }
+
+        async function solidReset() {
+            // Clear input
+            document.getElementById('csvUpload').value = '';
+            document.getElementById('uploadStatus').style.display = 'none';
+            
+            // Call server reset
+            try {
+                await fetch('/api/reset', { method: 'POST' });
+            } catch (e) { console.error("Reset failed", e); }
+            
+            // Zero out everything
+            totalCount = 0;
+            currentPage = 1;
+            
+            document.getElementById('totalRecords').textContent = '0';
+            document.getElementById('atRiskCount').textContent = '0';
+            document.getElementById('faultsOccurred').textContent = '0';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="text-center p-4 text-muted">Awaiting data upload...</td></tr>';
+            document.getElementById('rulesContainer').innerHTML = '<p class="text-muted text-center" style="font-size:0.7rem;">Upload data to view rules</p>';
+            document.getElementById('areaFilter').innerHTML = '';
+            document.getElementById('segmentFilter').innerHTML = '';
+            
+            if (riskChart) { riskChart.data.datasets[0].data = [0, 0, 0]; riskChart.update(); }
+            if (accuracyChart) { accuracyChart.data.datasets[0].data = [0, 0, 0, 0]; accuracyChart.update(); }
+            
+            updatePaginationUI();
+        }
+
+        function triggerExport(format) {
+            if (totalCount === 0) return;
+            const params = new URLSearchParams({ format: format });
+            const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
+            Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
+            const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
+            window.location.href = '/api/export?' + params.toString();
         }
 
         function initializeCharts() {
@@ -330,42 +366,23 @@
             }
         }
 
-        function handleFileUpload(event) {
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            const isParquet = file.name.toLowerCase().endsWith('.parquet');
             
-            if (isParquet) {
-                showUploadStatus('⏳ Processing Parquet...', 'transparent', '#3b82f6');
-                const fd = new FormData(); fd.append('file', file);
-                fetch('/api/upload', { method: 'POST', body: fd })
-                    .then(r => r.json())
-                    .then(resp => {
-                        if (resp.status !== 'success') throw new Error(resp.message);
-                        serverMode = true; allData = []; currentPage = 1;
-                        showUploadStatus(`✓ Loaded ${resp.records.toLocaleString()} records`, 'transparent', '#6ee7b7');
-                        fetchServerStats(); fetchServerPage(1);
-                    })
-                    .catch(err => showUploadStatus('❌ Failed: ' + err.message, 'transparent', '#ff6b6b'));
-            } else {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const lines = e.target.result.trim().split('\n');
-                        const headers = lines[0].split(',').map(h => h.trim());
-                        allData = [];
-                        for (let i = 1; i < lines.length; i++) {
-                            const values = lines[i].split(',').map(v => v.trim());
-                            if (values.length < headers.length) continue;
-                            const row = {}; headers.forEach((h, idx) => row[h] = values[idx]);
-                            allData.push(row);
-                        }
-                        serverMode = false; currentPage = 1;
-                        showUploadStatus(`✓ Loaded ${allData.length.toLocaleString()} CSV records`, 'transparent', '#6ee7b7');
-                        updateFilterOptions(); updateStatistics(); applyFilters();
-                    } catch (err) { showUploadStatus('❌ Error: ' + err.message, 'transparent', '#ff6b6b'); }
-                };
-                reader.readAsText(file);
+            showUploadStatus('⏳ Uploading...', 'transparent', '#3b82f6');
+            const fd = new FormData(); fd.append('file', file);
+            
+            try {
+                const r = await fetch('/api/upload', { method: 'POST', body: fd });
+                const resp = await r.json();
+                if (resp.status !== 'success') throw new Error(resp.message);
+                
+                showUploadStatus(`✓ Loaded ${resp.records.toLocaleString()}`, 'transparent', '#6ee7b7');
+                fetchServerStats();
+                fetchServerPage(1);
+            } catch (err) { 
+                showUploadStatus('❌ Failed: ' + err.message, 'transparent', '#ff6b6b'); 
             }
         }
 
@@ -383,13 +400,26 @@
                 
                 const areaSel = document.getElementById('areaFilter'); areaSel.innerHTML = '';
                 resp.unique_areas.forEach(a => { const o = document.createElement('option'); o.value=o.textContent=a; areaSel.appendChild(o); });
+                
                 const segSel = document.getElementById('segmentFilter'); segSel.innerHTML = '';
                 resp.unique_segments.forEach(s => { const o = document.createElement('option'); o.value=o.textContent=s; segSel.appendChild(o); });
                 
                 const c = resp.classifications;
                 if (accuracyChart) { accuracyChart.data.datasets[0].data = [c.TP, c.TN, c.FP, c.FN]; accuracyChart.update(); }
-                updateRulesCheckboxes();
-            }).catch(console.error);
+                updateRulesList();
+            });
+        }
+
+        function updateRulesList() {
+            const container = document.getElementById('rulesContainer'); container.innerHTML = '';
+            Object.keys(RULE_WEIGHTS).forEach(rule => {
+                const item = document.createElement('div'); item.className = 'rule-item';
+                item.innerHTML = `
+                    <label style="font-size:0.75rem; flex:1;">${RULE_LABELS[rule]}</label>
+                    <span style="font-size:0.75rem; color:#60a5fa; font-weight:600;">${(RULE_WEIGHTS[rule]*100).toFixed(0)}%</span>
+                `;
+                container.appendChild(item);
+            });
         }
 
         function fetchServerPage(page) {
@@ -397,30 +427,15 @@
             const params = new URLSearchParams({ page: page, page_size: PAGE_SIZE });
             const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
             Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
-            Array.from(document.getElementById('segmentFilter').selectedOptions).forEach(o => params.append('segments', o.value));
             const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
-            const d = document.getElementById('dateFilter').value; if(d) params.set('date', d);
-            const m = document.getElementById('monthFilter').value; if(m) params.set('month', m);
 
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="text-center p-4"><i class="fas fa-spinner fa-spin"></i></td></tr>';
             fetch('/api/data?' + params.toString()).then(r => r.json()).then(resp => {
                 if (resp.status !== 'success') return;
-                totalPages = resp.total_pages; totalCount = resp.total_count;
-                renderTable(resp.data); updatePaginationUI();
-                updateChartsFromServer(resp.data);
+                totalCount = resp.total_count; totalPages = resp.total_pages;
+                renderTable(resp.data); 
+                updatePaginationUI();
+                updateRiskChart(resp.data);
             });
-        }
-
-        function updatePaginationUI() {
-            document.getElementById('paginationBar').style.display = totalCount > 0 ? 'flex' : 'none';
-            document.getElementById('pageInfo').textContent = `Page ${currentPage} / ${totalPages}`;
-            const start = (currentPage-1)*PAGE_SIZE+1; const end = Math.min(currentPage*PAGE_SIZE, totalCount);
-            document.getElementById('recordRange').textContent = totalCount > 0 ? `${start}-${end} of ${totalCount}` : '';
-        }
-
-        function changePage(delta) {
-            const n = currentPage + delta; if (n < 1 || n > totalPages) return;
-            if (serverMode) fetchServerPage(n); else { currentPage = n; applyFilters(); }
         }
 
         function renderTable(data) {
@@ -433,18 +448,10 @@
                 const risk = parseFloat(row.calculated_risk_percentage) || 0;
                 const flagged = parseInt(row.flagged_at_risk); const fault = parseInt(row.fault_next_2_weeks);
                 
-                let resultLabel = '';
-                let resultClass = '';
-                
-                if (flagged && fault) { 
-                    resultLabel = 'Valid Alert'; resultClass = 'tp'; 
-                } else if (!flagged && !fault) { 
-                    resultLabel = 'Valid Safe'; resultClass = 'tn'; 
-                } else if (flagged && !fault) { 
-                    resultLabel = 'False Alarm'; resultClass = 'fp'; 
-                } else { 
-                    resultLabel = 'Missed Fault'; resultClass = 'fn'; 
-                }
+                let res = 'Valid Safe', cls = 'tn';
+                if (flagged && fault) { res='Valid Alert'; cls='tp'; }
+                else if (flagged && !fault) { res='False Alarm'; cls='fp'; }
+                else if (!flagged && fault) { res='Missed Fault'; cls='fn'; }
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -456,143 +463,39 @@
                     <td><span style="color:${risk>=70?'#ff6b6b':risk>=40?'#fbbf24':'#6ee7b7'}">${risk.toFixed(1)}%</span></td>
                     <td><span class="risk-badge ${risk>=70?'tp':'tn'}">${flagged?'🚨 ALERT':'✅ NORMAL'}</span></td>
                     <td>${fault?'<span class="text-danger fw-bold">YES</span>':'<span class="text-success">NO</span>'}</td>
-                    <td><span class="risk-badge ${resultClass}">${resultLabel}</span></td>
+                    <td><span class="risk-badge ${cls}">${res}</span></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function applyFilters() {
-            if (serverMode) { fetchServerPage(1); return; }
-            if (!allData.length) return;
-            const search = document.getElementById('searchFilter').value.toLowerCase();
-            const areas = Array.from(document.getElementById('areaFilter').selectedOptions).map(o => o.value);
-            const segments = Array.from(document.getElementById('segmentFilter').selectedOptions).map(o => o.value);
-            const minRisk = parseFloat(document.getElementById('riskFilter').value);
-            const date = document.getElementById('dateFilter').value;
-            const month = document.getElementById('monthFilter').value;
-
-            const filtered = allData.filter(r => {
-                if (search && !((r.phone_number||'').toLowerCase().includes(search) || (r.customer_name||'').toLowerCase().includes(search))) return false;
-                if (areas.length && !areas.includes(r.area_code)) return false;
-                if (segments.length && !segments.includes(r.business_segment)) return false;
-                if (minRisk > 0 && parseFloat(r.calculated_risk_percentage) < minRisk) return false;
-                if (date && r.date_recorded !== date) return false;
-                if (month && !(r.date_recorded||'').startsWith(month)) return false;
-                return true;
-            });
-
-            totalCount = filtered.length; totalPages = Math.max(1, Math.ceil(totalCount/PAGE_SIZE));
-            currentPage = Math.min(currentPage, totalPages);
-            const start = (currentPage-1)*PAGE_SIZE; renderTable(filtered.slice(start, start+PAGE_SIZE));
-            updatePaginationUI(); updateChartsFromData(filtered);
-        }
-
-        function updateChartsFromData(data) {
-            const high = data.filter(r => parseFloat(r.calculated_risk_percentage)>=70).length;
-            const med = data.filter(r => {const v=parseFloat(r.calculated_risk_percentage); return v>=40&&v<70;}).length;
-            const low = data.length - high - med;
-            if(riskChart) { riskChart.data.datasets[0].data = [high, med, low]; riskChart.update(); }
-
-            let tp=0, tn=0, fp=0, fn=0;
-            data.forEach(r => {
-                const fl=parseInt(r.flagged_at_risk), fa=parseInt(r.fault_next_2_weeks);
-                if(fl&&fa) tp++; else if(!fl&&!fa) tn++; else if(fl&&!fa) fp++; else fn++;
-            });
-            if(accuracyChart) { accuracyChart.data.datasets[0].data = [tp, tn, fp, fn]; accuracyChart.update(); }
-        }
-
-        function updateChartsFromServer(data) {
+        function updateRiskChart(data) {
             const high = data.filter(r => parseFloat(r.calculated_risk_percentage)>=70).length;
             const med = data.filter(r => {const v=parseFloat(r.calculated_risk_percentage); return v>=40&&v<70;}).length;
             const low = data.length - high - med;
             if(riskChart) { riskChart.data.datasets[0].data = [high, med, low]; riskChart.update(); }
         }
 
-        function updateFilterOptions() {
-            const areas = [...new Set(allData.map(r => r.area_code))].sort();
-            const aSel = document.getElementById('areaFilter'); aSel.innerHTML = '';
-            areas.forEach(a => { const o = document.createElement('option'); o.value=o.textContent=a; aSel.appendChild(o); });
-            const segments = [...new Set(allData.map(r => r.business_segment))].sort();
-            const sSel = document.getElementById('segmentFilter'); sSel.innerHTML = '';
-            segments.forEach(s => { const o = document.createElement('option'); o.value=o.textContent=s; sSel.appendChild(o); });
-            updateRulesCheckboxes();
+        function applyFilters() { fetchServerPage(1); }
+
+        function updatePaginationUI() {
+            document.getElementById('paginationBar').style.display = totalCount > 0 ? 'flex' : 'none';
+            document.getElementById('pageInfo').textContent = `Page ${currentPage} / ${totalPages}`;
+            const start = (currentPage-1)*PAGE_SIZE+1; const end = Math.min(currentPage*PAGE_SIZE, totalCount);
+            document.getElementById('recordRange').textContent = totalCount > 0 ? `${start}-${end} of ${totalCount}` : '';
         }
 
-        function updateRulesCheckboxes() {
-            const container = document.getElementById('rulesContainer'); container.innerHTML = '';
-            Object.keys(RULE_WEIGHTS).forEach(rule => {
-                const w = RULE_WEIGHTS[rule];
-                const item = document.createElement('div'); item.className = 'rule-item';
-                item.innerHTML = `
-                    <input type="checkbox" id="rule_${rule}" checked style="width:14px; height:14px;">
-                    <label for="rule_${rule}" style="font-size:0.75rem; flex:1; cursor:pointer;">${RULE_LABELS[rule]}</label>
-                    <span style="font-size:0.75rem; color:#60a5fa; font-weight:600;">${(w*100).toFixed(0)}%</span>
-                `;
-                container.appendChild(item);
-                item.querySelector('input').addEventListener('change', function() {
-                    enabledRules[rule] = this.checked;
-                    if(!serverMode) { recalculateLocalRisk(); applyFilters(); }
-                    updateTotalWeight();
-                });
-            });
-            updateTotalWeight();
-        }
-
-        function updateTotalWeight() {
-            let t = 0; Object.keys(RULE_WEIGHTS).forEach(r => { if(enabledRules[r]) t += RULE_WEIGHTS[r]; });
-            document.getElementById('totalWeight').textContent = (t*100).toFixed(0) + '%';
-        }
-
-        function recalculateLocalRisk() {
-            allData.forEach(row => {
-                let score = 0, totalW = 0;
-                Object.keys(RULE_WEIGHTS).forEach(rule => {
-                    if (enabledRules[rule]) {
-                        score += (parseInt(row[rule])||0) * RULE_WEIGHTS[rule];
-                        totalW += RULE_WEIGHTS[rule];
-                    }
-                });
-                const pct = totalW > 0 ? (score / totalW) * 100 : 0;
-                row.calculated_risk_percentage = pct;
-                row.flagged_at_risk = pct >= 70 ? 1 : 0;
-            });
-        }
-
-        function updateStatistics() {
-            if(!allData.length) return;
-            document.getElementById('totalRecords').textContent = allData.length.toLocaleString();
-            document.getElementById('atRiskCount').textContent = allData.filter(r => r.flagged_at_risk==1).length.toLocaleString();
-            document.getElementById('faultsOccurred').textContent = allData.filter(r => r.fault_next_2_weeks==1).length.toLocaleString();
+        function changePage(delta) {
+            const n = currentPage + delta; if (n < 1 || n > totalPages) return;
+            fetchServerPage(n);
         }
 
         function clearFilters() {
             document.getElementById('searchFilter').value = '';
             document.getElementById('areaFilter').selectedIndex = -1;
-            document.getElementById('segmentFilter').selectedIndex = -1;
             document.getElementById('riskFilter').value = '0';
             document.getElementById('riskValue').textContent = '0%';
-            document.getElementById('dateFilter').value = '';
-            document.getElementById('monthFilter').value = '';
-            currentPage = 1; applyFilters();
-        }
-
-        function clearFile() {
-            document.getElementById('csvUpload').value = '';
-            document.getElementById('uploadStatus').style.display = 'none';
-            allData = []; serverMode = false;
-            document.getElementById('totalRecords').textContent = '0';
-            document.getElementById('atRiskCount').textContent = '0';
-            document.getElementById('faultsOccurred').textContent = '0';
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="text-center p-4 text-muted">Awaiting data upload...</td></tr>';
-            document.getElementById('rulesContainer').innerHTML = '<p class="text-muted text-center" style="font-size:0.7rem;">Upload data to view rules</p>';
-            
-            if (riskChart) { riskChart.data.datasets[0].data = [0, 0, 0]; riskChart.update(); }
-            if (accuracyChart) { accuracyChart.data.datasets[0].data = [0, 0, 0, 0]; accuracyChart.update(); }
-        }
-
-        function exportData(fmt) {
-            alert('Exporting filtered data as ' + fmt.toUpperCase() + '...');
+            fetchServerPage(1);
         }
     </script>
 </body>
