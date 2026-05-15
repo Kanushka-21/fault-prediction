@@ -1,0 +1,21 @@
+phone_number,customer_name,area_code,business_segment,date_recorded,sensor_error,signal_critical,signal_degrading,sudden_drop,rx_instability,low_signal,frequent_fault,rule_score_weighted,calculated_risk_percentage,flagged_at_risk,fault_next_2_weeks
+0771234567,John Doe,CMB_01,Retail,2025-07-18,0,0,0,0,1,0,0,0.12,12.0,0,0
+0771234568,Jane Smith,MAT_02,SME,2025-07-19,1,0,1,0,0,0,0,0.33,33.0,0,1
+0771234569,Corp A,CMB_02,LargeEnterprise,2025-07-20,1,1,0,1,1,0,0,0.76,76.0,1,1
+0771234570,Bob Johnson,COL_01,Retail,2025-07-21,0,1,1,0,1,1,0,0.80,80.0,1,0
+0771234571,Alice Wong,CMB_01,SME,2025-07-22,1,1,1,1,0,0,0,0.75,75.0,1,1
+0771234572,Mike Chen,MAT_01,LargeEnterprise,2025-07-23,0,0,0,1,1,1,1,0.65,65.0,0,0
+0771234573,Sarah Lee,CMB_03,Retail,2025-07-24,1,1,1,1,1,1,0,0.92,92.0,1,1
+0771234574,David Brown,COL_02,SME,2025-07-25,0,1,0,0,0,1,0,0.38,38.0,0,0
+0771234575,Emma Taylor,MAT_02,LargeEnterprise,2025-07-26,1,0,1,1,0,0,1,0.62,62.0,0,1
+0771234576,Chris Martin,CMB_02,Retail,2025-07-27,1,1,1,0,1,1,1,0.98,98.0,1,1
+0771234577,Lisa Anderson,CMB_01,SME,2025-07-28,0,0,1,0,1,0,0,0.27,27.0,0,0
+0771234578,Mark Wilson,MAT_01,LargeEnterprise,2025-07-29,1,1,0,1,1,0,0,0.76,76.0,1,1
+0771234579,Rachel Green,COL_01,Retail,2025-07-30,0,1,1,1,0,1,0,0.63,63.0,0,0
+0771234580,Kevin White,CMB_03,SME,2025-07-31,1,0,1,1,1,0,1,0.78,78.0,1,1
+0771234581,Monica Jones,MAT_02,LargeEnterprise,2025-08-01,0,0,0,0,0,0,0,0.00,0.0,0,0
+0771234582,Paul Harris,CMB_02,Retail,2025-08-02,1,1,1,1,1,1,1,1.0,100.0,1,1
+0771234583,Angela Davis,CMB_01,SME,2025-08-03,0,1,0,1,0,1,0,0.48,48.0,0,0
+0771234584,Ryan Thomas,MAT_01,LargeEnterprise,2025-08-04,1,1,1,0,1,0,1,0.84,84.0,1,1
+0771234585,Sophia Jackson,COL_02,Retail,2025-08-05,0,0,1,1,0,0,0,0.31,31.0,0,0
+0771234586,Daniel Rodriguez,CMB_03,SME,2025-08-06,1,1,0,1,1,1,0,0.87,87.0,1,1

@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTTH Signal Drop Prediction Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f1419 0%, #1a202e 100%);
+            color: #e0e0e0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(15, 20, 25, 0.95) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .container-main {
+            width: 100%;
+            margin: 2rem 0;
+            padding: 0 1.5rem;
+        }
+
+        .page-title {
+            margin-bottom: 2rem;
+        }
+
+        .page-title h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-title p {
+            color: #a0a0a0;
+            font-size: 1.1rem;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(30, 40, 60, 0.4) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.15) !important;
+            background: rgba(30, 40, 60, 0.6) !important;
+        }
+
+        .card-header {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .card-title {
+            font-weight: 600;
+            margin-bottom: 0;
+            color: #e0e0e0;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(30, 40, 60, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0.5rem 0;
+        }
+
+        .stat-label {
+            color: #a0a0a0;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Filters */
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #b0b0b0;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(59, 130, 246, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            color: #e0e0e0 !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(59, 130, 246, 0.15) !important;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+            color: #e0e0e0 !important;
+        }
+
+        .form-control::placeholder {
+            color: #707070;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+            padding: 0.5rem 1.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            border: none !important;
+            color: white !important;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            color: #e0e0e0 !important;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669) !important;
+            border: none !important;
+            color: white !important;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857) !important;
+            transform: translateY(-2px);
+        }
+
+        /* Table */
+        .table {
+            color: #e0e0e0 !important;
+        }
+
+        .table thead {
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .table thead th {
+            font-weight: 600;
+            color: #b0b0b0;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            background: rgba(59, 130, 246, 0.05);
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .table tbody tr {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .table td {
+            vertical-align: middle;
+            padding: 1rem 0.75rem;
+        }
+
+        /* Risk Badge */
+        .risk-badge {
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ff6b6b;
+        }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .risk-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+        }
+
+        /* Classification Badge */
+        .classification-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .tp { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+        .tn { background: rgba(156, 163, 175, 0.2); color: #d1d5db; }
+        .fp { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+        .fn { background: rgba(239, 68, 68, 0.2); color: #ff6b6b; }
+
+        /* Data table pagination */
+        .dataTables_wrapper {
+            color: #e0e0e0;
+        }
+
+        .dataTables_paginate .paginate_button {
+            color: #e0e0e0 !important;
+            background: rgba(59, 130, 246, 0.1) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .dataTables_paginate .paginate_button.current {
+            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+            color: white !important;
+        }
+
+        /* Loading spinner */
+        .spinner-border {
+            border-color: rgba(255, 255, 255, 0.1);
+            border-right-color: #3b82f6;
+        }
+
+        /* Footer info */
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-box-title {
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box-text {
+            color: #b0b0b0;
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-title h1 {
+                font-size: 2rem;
+            }
+
+            .filter-group {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table td {
+                padding: 0.5rem 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container-fluid">
+            <span class="navbar-brand">
+                <i class="fas fa-signal"></i> FTTH Signal Drop Prediction
+            </span>
+            <span style="color: #a0a0a0; font-size: 0.9rem;">
+                Risk Analysis & Forecasting System (CSV Upload)
+            </span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-main">
+        <!-- Page Title -->
+        <div class="page-title">
+            <h1><i class="fas fa-chart-line"></i> Fault Prediction Dashboard</h1>
+            <p>Advanced analytics for FTTH network signal reliability assessment</p>
+        </div>
+
+        <!-- CSV Upload Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-upload"></i> Upload Data File</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <label for="csvUpload" class="form-label">Select CSV File (final_df_updated.csv)</label>
+                        <input type="file" id="csvUpload" class="form-control" accept=".csv" />
+                        <small style="color: #a0a0a0;">Expected columns: phone_number, customer_name, area_code, business_segment, date_recorded, sensor_error, signal_critical, signal_degrading, sudden_drop, rx_instability, low_signal, frequent_fault, rule_score_weighted, calculated_risk_percentage, flagged_at_risk, fault_next_2_weeks</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">&nbsp;</label>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button id="clearFileBtn" class="btn btn-secondary" style="flex: 1;">
+                                <i class="fas fa-trash"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="uploadStatus" style="margin-top: 1rem; padding: 1rem; border-radius: 8px; display: none; background: rgba(16, 185, 129, 0.2); color: #6ee7b7;">
+                    <i class="fas fa-check-circle"></i> <span id="uploadMessage"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Row -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-database"></i> Total Records</div>
+                <div class="stat-value" id="totalRecords">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-exclamation-triangle"></i> At Risk (Predicted)</div>
+                <div class="stat-value" id="atRiskCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label"><i class="fas fa-bolt"></i> Actual Faults</div>
+                <div class="stat-value" id="faultsOccurred">0</div>
+            </div>
+        </div>
+
+        <!-- Rules & Filters Card -->
+        <div class="row g-3">
+            <!-- Rules & Weight Calculator Section -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-calculator"></i> Rule Weights & Calculation</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 700px; overflow-y: auto;">
+                        <!-- Weight Formula Explanation -->
+                        <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                            <div style="font-weight: 600; color: #60a5fa; margin-bottom: 0.5rem;">📊 Risk Formula</div>
+                            <div style="color: #b0b0b0; font-size: 0.9rem; line-height: 1.6; font-family: 'Courier New', monospace;">
+                                <div>Risk % = Σ(Rule × Weight) ÷ Sum(Active Weights) × 100</div>
+                                <div style="margin-top: 0.5rem; color: #a0a0a0; font-size: 0.85rem;">
+                                    Threshold: 70% → Flagged At Risk
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Editable Rules Section -->
+                        <div id="rulesContainer" style="display: flex; flex-direction: column; gap: 1rem;">
+                            <p style="color: #a0a0a0;">Upload CSV file to load rules...</p>
+                        </div>
+
+                        <!-- Total Weight Indicator -->
+                        <div style="background: rgba(16, 185, 129, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                            <div style="color: #b0b0b0; font-size: 0.85rem; margin-bottom: 0.5rem;">Total Active Weight</div>
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #6ee7b7;" id="totalWeight">100%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters Section -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title"><i class="fas fa-filter"></i> Advanced Filters</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="filter-group">
+                            <div>
+                                <label for="searchFilter" class="form-label">Search by Phone / Name</label>
+                                <input type="text" id="searchFilter" class="form-control" placeholder="0771234567 or John Doe">
+                            </div>
+                            <div>
+                                <label for="areaFilter" class="form-label">Area Code</label>
+                                <select id="areaFilter" class="form-select" multiple>
+                                    <option value="">Load CSV first...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="segmentFilter" class="form-label">Business Segment</label>
+                                <select id="segmentFilter" class="form-select" multiple>
+                                    <option value="">Load CSV first...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="riskFilter" class="form-label">Risk Level (%)</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="range" id="riskFilter" class="form-range" min="0" max="100" value="0" style="flex: 1;">
+                                    <span id="riskValue" style="min-width: 60px; color: #a0a0a0;">≥ 0%</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="dateFilter" class="form-label">Specific Date</label>
+                                <input type="date" id="dateFilter" class="form-control">
+                            </div>
+                            <div>
+                                <label for="monthFilter" class="form-label">Month</label>
+                                <input type="month" id="monthFilter" class="form-control">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem;">
+                            <button id="clearFiltersBtn" class="btn btn-secondary">
+                                <i class="fas fa-redo"></i> Clear All Filters
+                            </button>
+                            <button id="exportBtn" class="btn btn-success">
+                                <i class="fas fa-download"></i> Export CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table Card -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title"><i class="fas fa-table"></i> Predicted vs Actual Analysis</h5>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x: auto;">
+                    <table id="dataTable" class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th colspan="5" style="text-align: center; background: rgba(59, 130, 246, 0.15); border-bottom: 2px solid #3b82f6;">📋 Customer & Date Info</th>
+                                <th colspan="3" style="text-align: center; background: rgba(59, 130, 246, 0.15); border-bottom: 2px solid #3b82f6;">🤖 Predicted Output</th>
+                                <th colspan="2" style="text-align: center; background: rgba(16, 185, 129, 0.15); border-bottom: 2px solid #10b981;">✓ Actual Outcome</th>
+                                <th style="text-align: center; background: rgba(245, 158, 11, 0.15); border-bottom: 2px solid #f59e0b;">Accuracy</th>
+                            </tr>
+                            <tr>
+                                <th>Phone</th>
+                                <th>Name</th>
+                                <th>Area</th>
+                                <th>Segment</th>
+                                <th>Date</th>
+                                <th>Risk %</th>
+                                <th>Flagged?</th>
+                                <th>Status</th>
+                                <th>Fault?</th>
+                                <th>Outcome</th>
+                                <th>Prediction Class</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr>
+                                <td colspan="11" style="text-align: center; padding: 2rem; color: #a0a0a0;">
+                                    Upload CSV file to view customer data
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 2rem; color: #707070; margin-top: 3rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <small><i class="fas fa-copyright"></i> 2025 FTTH Fault Prediction System - Data Analysts Dashboard</small>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script>
+        // Global state
+        let allData = [];
+        let enabledRules = {
+            'sensor_error': true,
+            'signal_critical': true,
+            'signal_degrading': true,
+            'sudden_drop': true,
+            'rx_instability': true,
+            'low_signal': true,
+            'frequent_fault': true
+        };
+
+        const RULE_WEIGHTS = {
+            'sensor_error': 0.18,
+            'signal_critical': 0.22,
+            'signal_degrading': 0.15,
+            'sudden_drop': 0.16,
+            'rx_instability': 0.12,
+            'low_signal': 0.10,
+            'frequent_fault': 0.07
+        };
+
+        const RULE_LABELS = {
+            'sensor_error': 'Sensor Error',
+            'signal_critical': 'Critical Signal',
+            'signal_degrading': 'Degrading Signal',
+            'sudden_drop': 'Sudden Drop',
+            'rx_instability': 'RX Instability',
+            'low_signal': 'Low Signal',
+            'frequent_fault': 'Frequent Fault'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('csvUpload').addEventListener('change', handleFileUpload);
+            document.getElementById('clearFileBtn').addEventListener('click', clearFile);
+            document.getElementById('searchFilter').addEventListener('input', applyFilters);
+            document.getElementById('areaFilter').addEventListener('change', applyFilters);
+            document.getElementById('segmentFilter').addEventListener('change', applyFilters);
+            document.getElementById('riskFilter').addEventListener('input', function() {
+                document.getElementById('riskValue').textContent = '≥ ' + this.value + '%';
+                applyFilters();
+            });
+            document.getElementById('dateFilter').addEventListener('change', applyFilters);
+            document.getElementById('monthFilter').addEventListener('change', applyFilters);
+            document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csv = e.target.result;
+                    const lines = csv.trim().split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim());
+
+                    allData = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+                        
+                        const values = lines[i].split(',').map(v => v.trim());
+                        const row = {};
+                        headers.forEach((header, index) => {
+                            row[header] = values[index];
+                        });
+                        allData.push(row);
+                    }
+
+                    // Show success message
+                    document.getElementById('uploadStatus').style.display = 'block';
+                    document.getElementById('uploadMessage').textContent = `✓ Loaded ${allData.length} records from CSV`;
+
+                    // Update dropdowns
+                    updateFilterOptions();
+
+                    // Render table
+                    updateStatistics();
+                    applyFilters();
+
+                } catch (error) {
+                    alert('Error parsing CSV: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearFile() {
+            document.getElementById('csvUpload').value = '';
+            document.getElementById('uploadStatus').style.display = 'none';
+            allData = [];
+            document.getElementById('totalRecords').textContent = '0';
+            document.getElementById('atRiskCount').textContent = '0';
+            document.getElementById('faultsOccurred').textContent = '0';
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="11" class="text-center">Upload CSV file to view data</td></tr>';
+            document.getElementById('areaFilter').innerHTML = '<option value="">Load CSV first...</option>';
+            document.getElementById('segmentFilter').innerHTML = '<option value="">Load CSV first...</option>';
+            document.getElementById('rulesContainer').innerHTML = '<p style="color: #a0a0a0;">Upload CSV file to load rules...</p>';
+            document.getElementById('totalWeight').textContent = '0%';
+        }
+
+        function updateFilterOptions() {
+            // Update Area Code dropdown
+            const areas = [...new Set(allData.map(row => row.area_code))].sort();
+            const areaSelect = document.getElementById('areaFilter');
+            areaSelect.innerHTML = '';
+            areas.forEach(area => {
+                const opt = document.createElement('option');
+                opt.value = area;
+                opt.textContent = area;
+                areaSelect.appendChild(opt);
+            });
+
+            // Update Business Segment dropdown
+            const segments = [...new Set(allData.map(row => row.business_segment))].sort();
+            const segmentSelect = document.getElementById('segmentFilter');
+            segmentSelect.innerHTML = '';
+            segments.forEach(segment => {
+                const opt = document.createElement('option');
+                opt.value = segment;
+                opt.textContent = segment;
+                segmentSelect.appendChild(opt);
+            });
+
+            // Update Rules checkboxes
+            updateRulesCheckboxes();
+        }
+
+        function updateRulesCheckboxes() {
+            const rulesContainer = document.getElementById('rulesContainer');
+            rulesContainer.innerHTML = '';
+
+            Object.keys(RULE_WEIGHTS).forEach(rule => {
+                const weight = RULE_WEIGHTS[rule];
+                const label = RULE_LABELS[rule];
+                const weightPercent = (weight * 100).toFixed(0);
+                
+                const ruleDiv = document.createElement('div');
+                ruleDiv.style.cssText = 'margin-bottom: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6;';
+                
+                ruleDiv.innerHTML = `
+                    <div style="margin-bottom: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="rule_${rule}" class="rule-checkbox" checked style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="rule_${rule}" style="cursor: pointer; font-weight: 600; color: #e0e0e0; margin-bottom: 0; flex: 1;">
+                                ${label}
+                            </label>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; padding-left: 2rem;">
+                            <label for="weight_${rule}" style="font-size: 0.85rem; color: #b0b0b0; min-width: 50px;">Weight:</label>
+                            <input type="number" id="weight_${rule}" class="weight-input form-control" min="0" max="1" step="0.01" value="${weight.toFixed(2)}" style="flex: 1; font-size: 0.9rem; padding: 0.4rem 0.5rem;">
+                            <span style="color: #a0a0a0; min-width: 40px; text-align: right;" id="weightPercent_${rule}">${weightPercent}%</span>
+                        </div>
+                    </div>
+                `;
+                
+                rulesContainer.appendChild(ruleDiv);
+            });
+
+            // Add event listeners
+            document.querySelectorAll('.rule-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const rule = this.id.replace('rule_', '');
+                    enabledRules[rule] = this.checked;
+                    recalculateRisks();
+                    updateStatistics();
+                    updateTotalWeight();
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.weight-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const rule = this.id.replace('weight_', '');
+                    let weight = parseFloat(this.value);
+                    
+                    // Clamp between 0 and 1
+                    if (isNaN(weight) || weight < 0) weight = 0;
+                    if (weight > 1) weight = 1;
+                    
+                    RULE_WEIGHTS[rule] = weight;
+                    this.value = weight.toFixed(2);
+                    
+                    // Update percentage display
+                    document.getElementById(`weightPercent_${rule}`).textContent = (weight * 100).toFixed(0) + '%';
+                    
+                    // Recalculate everything
+                    recalculateRisks();
+                    updateStatistics();
+                    updateTotalWeight();
+                    applyFilters();
+                });
+            });
+
+            updateTotalWeight();
+        }
+
+        function updateTotalWeight() {
+            let total = 0;
+            Object.keys(RULE_WEIGHTS).forEach(rule => {
+                if (enabledRules[rule]) {
+                    total += RULE_WEIGHTS[rule];
+                }
+            });
+            const totalPercent = (total * 100).toFixed(0);
+            document.getElementById('totalWeight').textContent = totalPercent + '%';
+        }
+
+        function recalculateRisks() {
+            allData.forEach(row => {
+                let weightedScore = 0;
+                let totalWeight = 0;
+
+                Object.keys(RULE_WEIGHTS).forEach(rule => {
+                    if (enabledRules[rule]) {
+                        const ruleValue = parseInt(row[rule]) || 0;
+                        const weight = RULE_WEIGHTS[rule];
+                        weightedScore += ruleValue * weight;
+                        totalWeight += weight;
+                    }
+                });
+
+                // Normalize if not all rules enabled
+                if (totalWeight > 0) {
+                    const riskPercentage = (weightedScore / totalWeight) * 100;
+                    row.calculated_risk_percentage = riskPercentage;
+                    row.flagged_at_risk = riskPercentage >= 70 ? 1 : 0;
+                } else {
+                    row.calculated_risk_percentage = 0;
+                    row.flagged_at_risk = 0;
+                }
+            });
+        }
+
+        function updateStatistics() {
+            if (allData.length === 0) {
+                document.getElementById('totalRecords').textContent = '0';
+                document.getElementById('atRiskCount').textContent = '0';
+                document.getElementById('faultsOccurred').textContent = '0';
+                return;
+            }
+
+            const totalRecords = allData.length;
+            const atRiskCount = allData.filter(r => r.flagged_at_risk == 1).length;
+            const faultsOccurred = allData.filter(r => r.fault_next_2_weeks == 1).length;
+
+            document.getElementById('totalRecords').textContent = totalRecords;
+            document.getElementById('atRiskCount').textContent = atRiskCount;
+            document.getElementById('faultsOccurred').textContent = faultsOccurred;
+        }
+
+        function applyFilters() {
+            if (allData.length === 0) {
+                document.getElementById('tableBody').innerHTML = '<tr><td colspan="11" class="text-center">Upload CSV file to view data</td></tr>';
+                return;
+            }
+
+            let filtered = allData.filter(row => {
+                // Search filter
+                const search = document.getElementById('searchFilter').value.toLowerCase();
+                if (search && !(row.phone_number.toLowerCase().includes(search) || row.customer_name.toLowerCase().includes(search))) {
+                    return false;
+                }
+
+                // Area code filter
+                const areas = Array.from(document.getElementById('areaFilter').selectedOptions).map(o => o.value);
+                if (areas.length > 0 && !areas.includes(row.area_code)) {
+                    return false;
+                }
+
+                // Segment filter
+                const segments = Array.from(document.getElementById('segmentFilter').selectedOptions).map(o => o.value);
+                if (segments.length > 0 && !segments.includes(row.business_segment)) {
+                    return false;
+                }
+
+                // Risk filter
+                const minRisk = parseFloat(document.getElementById('riskFilter').value);
+                if (minRisk > 0 && parseFloat(row.calculated_risk_percentage) < minRisk) {
+                    return false;
+                }
+
+                // Date filter
+                const date = document.getElementById('dateFilter').value;
+                if (date && row.date_recorded !== date) {
+                    return false;
+                }
+
+                // Month filter
+                const month = document.getElementById('monthFilter').value;
+                if (month && !row.date_recorded.startsWith(month)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            renderTable(filtered);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 2rem; color: #a0a0a0;">No records found matching your filters</td></tr>';
+                return;
+            }
+
+            data.forEach(row => {
+                const risk = parseFloat(row.calculated_risk_percentage) || 0;
+                const riskClass = risk >= 70 ? 'risk-high' : (risk >= 40 ? 'risk-medium' : 'risk-low');
+                
+                const flagged = parseInt(row.flagged_at_risk);
+                const fault = parseInt(row.fault_next_2_weeks);
+                
+                // Determine prediction accuracy
+                let predictionClass = '';
+                let classificationLabel = '';
+                let classColor = '';
+
+                if (flagged == 1 && fault == 1) {
+                    predictionClass = 'tp';
+                    classificationLabel = 'TP';
+                    classColor = '#6ee7b7'; // Green
+                } else if (flagged == 0 && fault == 0) {
+                    predictionClass = 'tn';
+                    classificationLabel = 'TN';
+                    classColor = '#d1d5db'; // Gray
+                } else if (flagged == 1 && fault == 0) {
+                    predictionClass = 'fp';
+                    classificationLabel = 'FP';
+                    classColor = '#fbbf24'; // Yellow
+                } else {
+                    predictionClass = 'fn';
+                    classificationLabel = 'FN';
+                    classColor = '#ff6b6b'; // Red
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <!-- Customer Info -->
+                    <td><strong>${row.phone_number}</strong></td>
+                    <td>${row.customer_name}</td>
+                    <td><span style="background: rgba(59, 130, 246, 0.2); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem;">${row.area_code}</span></td>
+                    <td><span style="font-size: 0.9rem;">${row.business_segment}</span></td>
+                    <td><small style="color: #a0a0a0;">${row.date_recorded}</small></td>
+                    
+                    <!-- Predicted Output -->
+                    <td><strong style="color: ${risk >= 70 ? '#ff6b6b' : risk >= 40 ? '#fbbf24' : '#6ee7b7'};">${risk.toFixed(1)}%</strong></td>
+                    <td><span class="risk-badge ${riskClass}">${flagged == 1 ? '🚨 YES' : '✅ NO'}</span></td>
+                    <td><span style="font-size: 0.85rem; color: #a0a0a0;">${flagged == 1 ? 'Alert' : 'Normal'}</span></td>
+                    
+                    <!-- Actual Outcome -->
+                    <td>${fault == 1 ? '<span style="color: #ff6b6b; font-weight: 600;">⚠️ YES</span>' : '<span style="color: #6ee7b7;">✅ NO</span>'}</td>
+                    <td style="font-size: 0.9rem; color: #a0a0a0;">${fault == 1 ? 'Fault' : 'No Fault'}</td>
+                    
+                    <!-- Accuracy Badge -->
+                    <td>
+                        <span class="classification-badge ${predictionClass}" style="display: inline-block; width: 100%; text-align: center; color: ${classColor};">
+                            <strong>${classificationLabel}</strong>
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function clearFilters() {
+            document.getElementById('searchFilter').value = '';
+            document.getElementById('areaFilter').selectedIndex = -1;
+            document.getElementById('segmentFilter').selectedIndex = -1;
+            document.getElementById('riskFilter').value = '0';
+            document.getElementById('riskValue').textContent = '≥ 0%';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('monthFilter').value = '';
+            applyFilters();
+        }
+
+        function exportData() {
+            if (allData.length === 0) {
+                alert('No data to export. Upload a CSV file first.');
+                return;
+            }
+
+            // Get filtered data
+            const search = document.getElementById('searchFilter').value.toLowerCase();
+            const areas = Array.from(document.getElementById('areaFilter').selectedOptions).map(o => o.value);
+            const segments = Array.from(document.getElementById('segmentFilter').selectedOptions).map(o => o.value);
+            const minRisk = parseFloat(document.getElementById('riskFilter').value);
+            const date = document.getElementById('dateFilter').value;
+            const month = document.getElementById('monthFilter').value;
+
+            let filtered = allData.filter(row => {
+                if (search && !(row.phone_number.toLowerCase().includes(search) || row.customer_name.toLowerCase().includes(search))) return false;
+                if (areas.length > 0 && !areas.includes(row.area_code)) return false;
+                if (segments.length > 0 && !segments.includes(row.business_segment)) return false;
+                if (minRisk > 0 && parseFloat(row.calculated_risk_percentage) < minRisk) return false;
+                if (date && row.date_recorded !== date) return false;
+                if (month && !row.date_recorded.startsWith(month)) return false;
+                return true;
+            });
+
+            // Create CSV
+            const headers = Object.keys(allData[0]);
+            let csv = headers.join(',') + '\n';
+            filtered.forEach(row => {
+                csv += headers.map(h => row[h]).join(',') + '\n';
+            });
+
+            // Download
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'filtered_data.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
