@@ -327,9 +327,22 @@
         function triggerExport(format) {
             if (totalCount === 0) return;
             const params = new URLSearchParams({ format: format });
-            const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
+            
+            const s = document.getElementById('searchFilter').value.trim(); 
+            if(s) params.set('phone_number', s);
+            
             Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
-            const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
+            Array.from(document.getElementById('segmentFilter').selectedOptions).forEach(o => params.append('segments', o.value));
+            
+            const r = document.getElementById('riskFilter').value; 
+            if(r > 0) params.set('min_risk', r);
+            
+            const d = document.getElementById('dateFilter').value;
+            if(d) params.set('date', d);
+            
+            const m = document.getElementById('monthFilter').value;
+            if(m) params.set('month', m);
+
             window.location.href = '/api/export?' + params.toString();
         }
 
@@ -425,23 +438,46 @@
         function fetchServerPage(page) {
             currentPage = page;
             const params = new URLSearchParams({ page: page, page_size: PAGE_SIZE });
-            const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
+            
+            const s = document.getElementById('searchFilter').value.trim(); 
+            if(s) params.set('phone_number', s);
+            
             Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
-            const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
+            Array.from(document.getElementById('segmentFilter').selectedOptions).forEach(o => params.append('segments', o.value));
+            
+            const r = document.getElementById('riskFilter').value; 
+            if(r > 0) params.set('min_risk', r);
+            
+            const d = document.getElementById('dateFilter').value;
+            if(d) params.set('date', d);
+            
+            const m = document.getElementById('monthFilter').value;
+            if(m) params.set('month', m);
 
-            fetch('/api/data?' + params.toString()).then(r => r.json()).then(resp => {
-                if (resp.status !== 'success') return;
-                totalCount = resp.total_count; totalPages = resp.total_pages;
-                renderTable(resp.data); 
-                updatePaginationUI();
-                updateRiskChart(resp.data);
-            });
+            fetch('/api/data?' + params.toString())
+                .then(r => {
+                    if (!r.ok) throw new Error(`Server returned ${r.status}`);
+                    return r.json();
+                })
+                .then(resp => {
+                    if (resp.status !== 'success') throw new Error(resp.message || 'Unknown error');
+                    totalCount = resp.total_count; 
+                    totalPages = resp.total_pages;
+                    renderTable(resp.data); 
+                    updatePaginationUI();
+                    updateRiskChart(resp.data);
+                })
+                .catch(err => {
+                    console.error("Data fetch failed:", err);
+                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" class="text-center p-4 text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading data: ${err.message}</td></tr>`;
+                });
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
             if (!data.length) { 
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center p-4 text-muted">Awaiting data upload...</td></tr>'; 
+                const msg = totalCount > 0 ? "No records match current filters." : "Awaiting data upload...";
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-muted">${msg}</td></tr>`; 
                 return; 
             }
             data.forEach(row => {
@@ -493,8 +529,11 @@
         function clearFilters() {
             document.getElementById('searchFilter').value = '';
             document.getElementById('areaFilter').selectedIndex = -1;
+            document.getElementById('segmentFilter').selectedIndex = -1;
             document.getElementById('riskFilter').value = '0';
             document.getElementById('riskValue').textContent = '0%';
+            document.getElementById('dateFilter').value = '';
+            document.getElementById('monthFilter').value = '';
             fetchServerPage(1);
         }
     </script>
