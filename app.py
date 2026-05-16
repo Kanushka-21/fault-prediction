@@ -3,6 +3,7 @@ FTTH Signal Drop Prediction System - Flask Backend
 STRICT MANUAL UPLOAD MODE - No auto-loading.
 """
 
+import os
 from flask import Flask, render_template, jsonify, request, send_file
 from flask_cors import CORS
 import pandas as pd
@@ -292,4 +293,5 @@ def index():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
