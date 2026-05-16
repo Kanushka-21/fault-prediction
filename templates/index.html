@@ -78,7 +78,7 @@
     <nav class="navbar">
         <div class="container-fluid">
             <span class="navbar-brand"><i class="fas fa-signal"></i> FTTH Fault Prediction</span>
-            <span style="color: #707070; font-size: 0.7rem;">v1.0 Analysis Dashboard</span>
+            <span style="color: #707070; font-size: 0.7rem;">v1.1 Analysis Dashboard</span>
         </div>
     </nav>
 
@@ -165,31 +165,56 @@
                             <p class="text-muted text-center" style="font-size: 0.7rem;">Upload data to view rules</p>
                         </div>
                         
-                        <!-- Mathematical Explanation -->
-                        <div style="font-size: 0.7rem; background: rgba(59, 130, 246, 0.1); padding: 0.5rem; border-radius: 6px; border-left: 3px solid #3b82f6;">
-                            <div class="fw-bold text-info mb-1"><i class="fas fa-info-circle"></i> 1. Risk Calculation Logic:</div>
-                            <div style="line-height: 1.4; color: #d0d0d0; margin-bottom: 0.5rem;">
-                                • Each <strong>Rule</strong> (0 or 1) × <strong>Weight</strong>.<br>
-                                • Sum these to get <strong>Total Score</strong>.<br>
-                                • (Total Score ÷ Sum of Weights) × 100.<br>
-                                <div class="mt-1">
-                                    <strong>Threshold:</strong> <span class="text-danger">≥ 70%</span> = ALERT
+                        <!-- Logic Reference -->
+                        <div style="font-size: 0.65rem; background: rgba(30, 40, 60, 0.6); padding: 0.7rem; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6;">
+                            <div class="fw-bold text-info mb-2" style="font-size: 0.75rem;"><i class="fas fa-brain"></i> Logic Reference</div>
+                            
+                            <div class="mb-2">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">1. System Status Logic:</div>
+                                <div style="color: #b0b0b0; padding-left: 0.5rem; line-height: 1.3;">
+                                    • <code>Risk % >= 70%</code> → <strong class="text-danger">ALERT</strong> <span style="font-size: 0.6rem;">(Preventive action)</span><br>
+                                    • <code>Risk % < 70%</code> → <strong class="text-success">NORMAL</strong> <span style="font-size: 0.6rem;">(Stable network)</span>
                                 </div>
                             </div>
 
-                            <div class="fw-bold text-info mb-1 pt-2 border-top border-secondary"><i class="fas fa-check-double"></i> 2. Final Result Logic:</div>
-                            <div style="line-height: 1.4; color: #d0d0d0;">
-                                <strong>Success Cases:</strong><br>
-                                • <span class="text-success">Alert + Fault</span> → Valid Alert<br>
-                                • <span class="text-success">Safe + No Fault</span> → Valid Safe<br>
-                                <strong>Failure Cases:</strong><br>
-                                • <span class="text-warning">Alert + No Fault</span> → False Alarm<br>
-                                • <span class="text-danger">Safe + Fault</span> → Missed Fault
+                            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.6rem 0;"></div>
+
+                            <div class="mb-2">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">2. Actual Fault? Logic:</div>
+                                <div style="color: #b0b0b0; padding-left: 0.5rem; line-height: 1.3;">
+                                    • Pulled from dataset (<code>FAULT</code> / <code>2Week_Fault</code>)<br>
+                                    • <code>1</code> → <strong class="text-danger">YES</strong> <span style="font-size: 0.6rem;">(Signal drop occurred)</span><br>
+                                    • <code>0</code> → <strong class="text-success">NO</strong> <span style="font-size: 0.6rem;">(No recorded drop)</span>
+                                </div>
+                            </div>
+
+                            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.6rem 0;"></div>
+
+                            <div>
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">3. Final Result (Decision):</div>
+                                <div style="color: #d0d0d0; padding-left: 0.2rem; line-height: 1.5;">
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 0.6rem;"></i>
+                                        <span><strong>Valid Alert (TP):</strong> System said ALERT and a fault occurred.</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fas fa-check-circle text-success" style="font-size: 0.6rem;"></i>
+                                        <span><strong>Valid Safe (TN):</strong> System said NORMAL and no fault occurred.</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fas fa-exclamation-circle text-warning" style="font-size: 0.6rem;"></i>
+                                        <span><strong>False Alarm (FP):</strong> System said ALERT but no fault occurred.</span>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <i class="fas fa-times-circle text-danger" style="font-size: 0.6rem;"></i>
+                                        <span><strong>Missed Fault (FN):</strong> System said NORMAL but a fault occurred.</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="p-2 border-top border-secondary text-center">
-                        <span class="stat-label" style="font-size: 0.6rem;">Active Weights:</span> <span id="totalWeight" class="text-success fw-bold">100%</span>
+                        <span class="stat-label" style="font-size: 0.6rem;">Active Weights Sum:</span> <span id="totalWeight" class="text-success fw-bold">100%</span>
                     </div>
                 </div>
             </div>
@@ -248,7 +273,6 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
     <script>
-        let serverMode = true;
         let currentPage = 1;
         const PAGE_SIZE = 500;
         let totalPages = 1;
@@ -259,7 +283,7 @@
             'sudden_drop': true, 'rx_instability': true, 'low_signal': true, 'frequent_fault': true
         };
 
-        const RULE_WEIGHTS = {
+        let RULE_WEIGHTS = {
             'sensor_error': 0.18, 'signal_critical': 0.22, 'signal_degrading': 0.15, 
             'sudden_drop': 0.16, 'rx_instability': 0.12, 'low_signal': 0.10, 'frequent_fault': 0.07
         };
@@ -275,7 +299,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             setupEventListeners();
             initializeCharts();
-            // Solid reset on load to ensure 0 state
             solidReset();
         });
 
@@ -296,20 +319,23 @@
             document.getElementById('exportTxtBtn').addEventListener('click', () => triggerExport('txt'));
         }
 
+        function getDynamicParams() {
+            const params = new URLSearchParams();
+            params.set('weights', JSON.stringify(RULE_WEIGHTS));
+            Object.keys(enabledRules).forEach(rule => {
+                if (enabledRules[rule]) {
+                    params.append('enabled_rules', rule);
+                }
+            });
+            return params;
+        }
+
         async function solidReset() {
-            // Clear input
             document.getElementById('csvUpload').value = '';
             document.getElementById('uploadStatus').style.display = 'none';
-            
-            // Call server reset
-            try {
-                await fetch('/api/reset', { method: 'POST' });
-            } catch (e) { console.error("Reset failed", e); }
-            
-            // Zero out everything
+            try { await fetch('/api/reset', { method: 'POST' }); } catch (e) {}
             totalCount = 0;
             currentPage = 1;
-            
             document.getElementById('totalRecords').textContent = '0';
             document.getElementById('atRiskCount').textContent = '0';
             document.getElementById('faultsOccurred').textContent = '0';
@@ -317,32 +343,21 @@
             document.getElementById('rulesContainer').innerHTML = '<p class="text-muted text-center" style="font-size:0.7rem;">Upload data to view rules</p>';
             document.getElementById('areaFilter').innerHTML = '';
             document.getElementById('segmentFilter').innerHTML = '';
-            
             if (riskChart) { riskChart.data.datasets[0].data = [0, 0, 0]; riskChart.update(); }
             if (accuracyChart) { accuracyChart.data.datasets[0].data = [0, 0, 0, 0]; accuracyChart.update(); }
-            
             updatePaginationUI();
         }
 
         function triggerExport(format) {
             if (totalCount === 0) return;
-            const params = new URLSearchParams({ format: format });
-            
-            const s = document.getElementById('searchFilter').value.trim(); 
-            if(s) params.set('phone_number', s);
-            
+            const params = getDynamicParams();
+            params.set('format', format);
+            const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
             Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
             Array.from(document.getElementById('segmentFilter').selectedOptions).forEach(o => params.append('segments', o.value));
-            
-            const r = document.getElementById('riskFilter').value; 
-            if(r > 0) params.set('min_risk', r);
-            
-            const d = document.getElementById('dateFilter').value;
-            if(d) params.set('date', d);
-            
-            const m = document.getElementById('monthFilter').value;
-            if(m) params.set('month', m);
-
+            const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
+            const d = document.getElementById('dateFilter').value; if(d) params.set('date', d);
+            const m = document.getElementById('monthFilter').value; if(m) params.set('month', m);
             window.location.href = '/api/export?' + params.toString();
         }
 
@@ -358,7 +373,6 @@
                     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e0e0e0', font: { size: 9 } }, position: 'bottom' } } }
                 });
             }
-
             const accCtx = document.getElementById('accuracyChart');
             if (accCtx) {
                 accuracyChart = new Chart(accCtx, {
@@ -382,21 +396,16 @@
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             showUploadStatus('⏳ Uploading...', 'transparent', '#3b82f6');
             const fd = new FormData(); fd.append('file', file);
-            
             try {
                 const r = await fetch('/api/upload', { method: 'POST', body: fd });
                 const resp = await r.json();
                 if (resp.status !== 'success') throw new Error(resp.message);
-                
                 showUploadStatus(`✓ Loaded ${resp.records.toLocaleString()}`, 'transparent', '#6ee7b7');
                 fetchServerStats();
                 fetchServerPage(1);
-            } catch (err) { 
-                showUploadStatus('❌ Failed: ' + err.message, 'transparent', '#ff6b6b'); 
-            }
+            } catch (err) { showUploadStatus('❌ Failed: ' + err.message, 'transparent', '#ff6b6b'); }
         }
 
         function showUploadStatus(msg, bg, color) {
@@ -405,18 +414,21 @@
         }
 
         function fetchServerStats() {
-            fetch('/api/stats').then(r => r.json()).then(resp => {
+            const params = getDynamicParams();
+            fetch('/api/stats?' + params.toString()).then(r => r.json()).then(resp => {
                 if (resp.status !== 'success') return;
                 document.getElementById('totalRecords').textContent = resp.total_records.toLocaleString();
                 document.getElementById('atRiskCount').textContent = resp.at_risk_count.toLocaleString();
                 document.getElementById('faultsOccurred').textContent = resp.faults_occurred.toLocaleString();
                 
-                const areaSel = document.getElementById('areaFilter'); areaSel.innerHTML = '';
-                resp.unique_areas.forEach(a => { const o = document.createElement('option'); o.value=o.textContent=a; areaSel.appendChild(o); });
-                
-                const segSel = document.getElementById('segmentFilter'); segSel.innerHTML = '';
-                resp.unique_segments.forEach(s => { const o = document.createElement('option'); o.value=o.textContent=s; segSel.appendChild(o); });
-                
+                const areaSel = document.getElementById('areaFilter');
+                if (areaSel.innerHTML === '') {
+                    resp.unique_areas.forEach(a => { const o = document.createElement('option'); o.value=o.textContent=a; areaSel.appendChild(o); });
+                }
+                const segSel = document.getElementById('segmentFilter');
+                if (segSel.innerHTML === '') {
+                    resp.unique_segments.forEach(s => { const o = document.createElement('option'); o.value=o.textContent=s; segSel.appendChild(o); });
+                }
                 const c = resp.classifications;
                 if (accuracyChart) { accuracyChart.data.datasets[0].data = [c.TP, c.TN, c.FP, c.FN]; accuracyChart.update(); }
                 updateRulesList();
@@ -424,66 +436,94 @@
         }
 
         function updateRulesList() {
-            const container = document.getElementById('rulesContainer'); container.innerHTML = '';
+            const container = document.getElementById('rulesContainer'); 
+            if (!container || (container.querySelectorAll('.rule-toggle').length > 0)) return;
+            container.innerHTML = '';
+            
             Object.keys(RULE_WEIGHTS).forEach(rule => {
-                const item = document.createElement('div'); item.className = 'rule-item';
+                const item = document.createElement('div'); 
+                item.className = 'rule-item d-flex align-items-center gap-2 mb-1';
+                item.style.padding = '0.25rem 0.5rem';
+                
+                const checked = enabledRules[rule] ? 'checked' : '';
+                const weightVal = (RULE_WEIGHTS[rule] * 100).toFixed(0);
+                
                 item.innerHTML = `
-                    <label style="font-size:0.75rem; flex:1;">${RULE_LABELS[rule]}</label>
-                    <span style="font-size:0.75rem; color:#60a5fa; font-weight:600;">${(RULE_WEIGHTS[rule]*100).toFixed(0)}%</span>
+                    <input type="checkbox" class="rule-toggle" data-rule="${rule}" ${checked}>
+                    <label style="font-size:0.75rem; flex:1; margin:0; color:#fff;">${RULE_LABELS[rule]}</label>
+                    <input type="number" class="rule-weight-input form-control form-control-sm" 
+                           data-rule="${rule}" value="${weightVal}" 
+                           style="width: 45px; padding: 1px 3px; font-size: 0.7rem; height: auto; background:rgba(0,0,0,0.3) !important;">
+                    <span style="font-size:0.7rem; color:#a0a0a0;">%</span>
                 `;
                 container.appendChild(item);
             });
+
+            document.querySelectorAll('.rule-toggle').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    enabledRules[e.target.dataset.rule] = e.target.checked;
+                    updateTotalWeightDisplay();
+                    triggerRefresh();
+                });
+            });
+
+            document.querySelectorAll('.rule-weight-input').forEach(el => {
+                el.addEventListener('change', (e) => {
+                    RULE_WEIGHTS[e.target.dataset.rule] = parseFloat(e.target.value) / 100;
+                    updateTotalWeightDisplay();
+                    triggerRefresh();
+                });
+            });
+            updateTotalWeightDisplay();
+        }
+
+        function updateTotalWeightDisplay() {
+            let total = 0;
+            Object.keys(RULE_WEIGHTS).forEach(rule => {
+                if (enabledRules[rule]) total += RULE_WEIGHTS[rule];
+            });
+            const el = document.getElementById('totalWeight');
+            if (el) {
+                el.textContent = (total * 100).toFixed(0) + '%';
+                el.className = (total > 0) ? 'text-success fw-bold' : 'text-danger fw-bold';
+            }
+        }
+
+        function triggerRefresh() {
+            if (totalCount > 0) { fetchServerStats(); fetchServerPage(1); }
         }
 
         function fetchServerPage(page) {
             currentPage = page;
-            const params = new URLSearchParams({ page: page, page_size: PAGE_SIZE });
-            
-            const s = document.getElementById('searchFilter').value.trim(); 
-            if(s) params.set('phone_number', s);
-            
+            const params = getDynamicParams();
+            params.set('page', page); params.set('page_size', PAGE_SIZE);
+            const s = document.getElementById('searchFilter').value.trim(); if(s) params.set('phone_number', s);
             Array.from(document.getElementById('areaFilter').selectedOptions).forEach(o => params.append('area_codes', o.value));
             Array.from(document.getElementById('segmentFilter').selectedOptions).forEach(o => params.append('segments', o.value));
-            
-            const r = document.getElementById('riskFilter').value; 
-            if(r > 0) params.set('min_risk', r);
-            
-            const d = document.getElementById('dateFilter').value;
-            if(d) params.set('date', d);
-            
-            const m = document.getElementById('monthFilter').value;
-            if(m) params.set('month', m);
+            const r = document.getElementById('riskFilter').value; if(r > 0) params.set('min_risk', r);
+            const d = document.getElementById('dateFilter').value; if(d) params.set('date', d);
+            const m = document.getElementById('monthFilter').value; if(m) params.set('month', m);
 
-            fetch('/api/data?' + params.toString())
-                .then(r => {
-                    if (!r.ok) throw new Error(`Server returned ${r.status}`);
-                    return r.json();
-                })
-                .then(resp => {
-                    if (resp.status !== 'success') throw new Error(resp.message || 'Unknown error');
-                    totalCount = resp.total_count; 
-                    totalPages = resp.total_pages;
-                    renderTable(resp.data); 
-                    updatePaginationUI();
-                    updateRiskChart(resp.data);
-                })
-                .catch(err => {
-                    console.error("Data fetch failed:", err);
-                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" class="text-center p-4 text-danger"><i class="fas fa-exclamation-triangle"></i> Error loading data: ${err.message}</td></tr>`;
-                });
+            fetch('/api/data?' + params.toString()).then(r => r.json()).then(resp => {
+                if (resp.status !== 'success') throw new Error(resp.message);
+                totalCount = resp.total_count; totalPages = resp.total_pages;
+                renderTable(resp.data); 
+                updatePaginationUI();
+                updateRiskChart(resp.data);
+            }).catch(err => {
+                document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" class="text-center p-4 text-danger">Error: ${err.message}</td></tr>`;
+            });
         }
 
         function renderTable(data) {
             const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
             if (!data.length) { 
-                const msg = totalCount > 0 ? "No records match current filters." : "Awaiting data upload...";
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-muted">${msg}</td></tr>`; 
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center p-4 text-muted">${totalCount>0?'No match':'Awaiting data upload...'}</td></tr>`; 
                 return; 
             }
             data.forEach(row => {
                 const risk = parseFloat(row.calculated_risk_percentage) || 0;
                 const flagged = parseInt(row.flagged_at_risk); const fault = parseInt(row.fault_next_2_weeks);
-                
                 let res = 'Valid Safe', cls = 'tn';
                 if (flagged && fault) { res='Valid Alert'; cls='tp'; }
                 else if (flagged && !fault) { res='False Alarm'; cls='fp'; }
@@ -513,19 +553,16 @@
         }
 
         function applyFilters() { fetchServerPage(1); }
-
         function updatePaginationUI() {
             document.getElementById('paginationBar').style.display = totalCount > 0 ? 'flex' : 'none';
             document.getElementById('pageInfo').textContent = `Page ${currentPage} / ${totalPages}`;
             const start = (currentPage-1)*PAGE_SIZE+1; const end = Math.min(currentPage*PAGE_SIZE, totalCount);
             document.getElementById('recordRange').textContent = totalCount > 0 ? `${start}-${end} of ${totalCount}` : '';
         }
-
         function changePage(delta) {
             const n = currentPage + delta; if (n < 1 || n > totalPages) return;
             fetchServerPage(n);
         }
-
         function clearFilters() {
             document.getElementById('searchFilter').value = '';
             document.getElementById('areaFilter').selectedIndex = -1;
