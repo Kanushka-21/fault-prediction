@@ -167,47 +167,64 @@
                         
                         <!-- Logic Reference -->
                         <div style="font-size: 0.65rem; background: rgba(30, 40, 60, 0.6); padding: 0.7rem; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2); border-left: 3px solid #3b82f6;">
-                            <div class="fw-bold text-info mb-2" style="font-size: 0.75rem;"><i class="fas fa-brain"></i> Logic Reference</div>
+                            <div class="fw-bold text-info mb-3" style="font-size: 0.75rem;"><i class="fas fa-book-open"></i> Logic Reference</div>
                             
-                            <div class="mb-2">
-                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">1. System Status Logic:</div>
-                                <div style="color: #b0b0b0; padding-left: 0.5rem; line-height: 1.3;">
-                                    • <code>Risk % >= 70%</code> → <strong class="text-danger">ALERT</strong> <span style="font-size: 0.6rem;">(Preventive action)</span><br>
-                                    • <code>Risk % < 70%</code> → <strong class="text-success">NORMAL</strong> <span style="font-size: 0.6rem;">(Stable network)</span>
+                            <!-- 1. Risk Score -->
+                            <div class="mb-3">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;"><i class="fas fa-chart-pie text-info"></i> 1. Risk Score (How likely is a fault?)</div>
+                                <div style="color: #b0b0b0; padding-left: 1.2rem; line-height: 1.4; font-size: 0.65rem;">
+                                    • <strong class="text-light">Logic:</strong> We check which of the 7 rules are triggered (1 or 0).<br>
+                                    • <strong class="text-light">Calculation:</strong> <code>(Rule 1 × Weight 1) + (Rule 2 × Weight 2) ...</code><br>
+                                    • <strong class="text-light">Normalization:</strong> The total is divided by the sum of all <strong>active</strong> weights to keep it within 100%.<br>
+                                    • <strong class="text-light">Result:</strong> A probability percentage (0% to 100%).
                                 </div>
                             </div>
 
                             <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.6rem 0;"></div>
 
-                            <div class="mb-2">
-                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">2. Actual Fault? Logic:</div>
-                                <div style="color: #b0b0b0; padding-left: 0.5rem; line-height: 1.3;">
-                                    • Pulled from dataset (<code>FAULT</code> / <code>2Week_Fault</code>)<br>
-                                    • <code>1</code> → <strong class="text-danger">YES</strong> <span style="font-size: 0.6rem;">(Signal drop occurred)</span><br>
-                                    • <code>0</code> → <strong class="text-success">NO</strong> <span style="font-size: 0.6rem;">(No recorded drop)</span>
+                            <!-- 2. System Status -->
+                            <div class="mb-3">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;"><i class="fas fa-robot text-info"></i> 2. System Status (The System's Prediction)</div>
+                                <div style="color: #b0b0b0; padding-left: 1.2rem; line-height: 1.4; font-size: 0.65rem;">
+                                    • <strong class="text-light">Logic:</strong> A simple "Yes/No" decision based on the Risk Score.<br>
+                                    • <strong class="text-danger">ALERT:</strong> Risk is <strong>70% or more</strong>. (Preventive action needed)<br>
+                                    • <strong class="text-success">NORMAL:</strong> Risk is <strong>less than 70%</strong>. (Stable connection)
                                 </div>
                             </div>
 
                             <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.6rem 0;"></div>
 
-                            <div>
-                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;">3. Final Result (Decision):</div>
-                                <div style="color: #d0d0d0; padding-left: 0.2rem; line-height: 1.5;">
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="fas fa-check-circle text-success" style="font-size: 0.6rem;"></i>
-                                        <span><strong>Valid Alert (TP):</strong> System said ALERT and a fault occurred.</span>
+                            <!-- 3. Actual Fault -->
+                            <div class="mb-3">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;"><i class="fas fa-bolt text-info"></i> 3. Actual Fault? (The Real-World Truth)</div>
+                                <div style="color: #b0b0b0; padding-left: 1.2rem; line-height: 1.4; font-size: 0.65rem;">
+                                    • <strong class="text-light">Logic:</strong> This is the data pulled directly from your uploaded file.<br>
+                                    • <strong class="text-danger">YES (1):</strong> A real signal drop happened within 2 weeks.<br>
+                                    • <strong class="text-success">NO (0):</strong> No signal drop happened.
+                                </div>
+                            </div>
+
+                            <div style="height: 1px; background: rgba(255,255,255,0.1); margin: 0.6rem 0;"></div>
+
+                            <!-- 4. Final Result -->
+                            <div class="mb-2">
+                                <div class="fw-bold text-white mb-1" style="font-size: 0.7rem;"><i class="fas fa-clipboard-check text-info"></i> 4. Final Result (The Accuracy Check)</div>
+                                <div style="color: #d0d0d0; padding-left: 1.2rem; line-height: 1.5; font-size: 0.65rem;">
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <i class="fas fa-check-circle text-success mt-1"></i>
+                                        <span><strong class="text-success">Valid Alert (TP):</strong> Predicted <strong>ALERT</strong> and fault <strong>HAPPENED</strong>. (Good catch!)</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="fas fa-check-circle text-success" style="font-size: 0.6rem;"></i>
-                                        <span><strong>Valid Safe (TN):</strong> System said NORMAL and no fault occurred.</span>
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <i class="fas fa-check-circle text-success mt-1"></i>
+                                        <span><strong class="text-success">Valid Safe (TN):</strong> Predicted <strong>NORMAL</strong> and fault <strong>DID NOT HAPPEN</strong>. (Correct safe)</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="fas fa-exclamation-circle text-warning" style="font-size: 0.6rem;"></i>
-                                        <span><strong>False Alarm (FP):</strong> System said ALERT but no fault occurred.</span>
+                                    <div class="d-flex align-items-start gap-2 mb-1">
+                                        <i class="fas fa-exclamation-circle text-warning mt-1"></i>
+                                        <span><strong class="text-warning">False Alarm (FP):</strong> Predicted <strong>ALERT</strong> but fault <strong>DID NOT HAPPEN</strong>. (Wasted effort)</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-1">
-                                        <i class="fas fa-times-circle text-danger" style="font-size: 0.6rem;"></i>
-                                        <span><strong>Missed Fault (FN):</strong> System said NORMAL but a fault occurred.</span>
+                                    <div class="d-flex align-items-start gap-2">
+                                        <i class="fas fa-times-circle text-danger mt-1"></i>
+                                        <span><strong class="text-danger">Missed Fault (FN):</strong> Predicted <strong>NORMAL</strong> but fault <strong>HAPPENED</strong>. (Service impact)</span>
                                     </div>
                                 </div>
                             </div>
